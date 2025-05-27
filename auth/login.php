@@ -1,10 +1,10 @@
 <?php
-// auth/login.php
+// File: auth/login.php
 require_once '../config/config.php';
 
-// Jika sudah login, redirect ke halaman utama
+// Jika sudah login, langsung arahkan ke dashboard
 if (isset($_SESSION['user_id'])) {
-    header("Location: ../pages/index.php");
+    header("Location: ../pages/dashboard.php");
     exit;
 }
 
@@ -42,7 +42,8 @@ if (isset($_POST['login'])) {
     $username = $_POST['username_log'];
     $password = $_POST['password_log'];
 
-    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE username = ?");
+    // PENTING: Pastikan query mengambil kolom 'role'
+    $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -50,9 +51,13 @@ if (isset($_POST['login'])) {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password'])) {
+            // PENTING: Simpan semua data yang dibutuhkan ke session
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            header("Location: ../pages/index.php");
+            $_SESSION['role'] = $user['role'];
+            
+            // Arahkan ke dashboard setelah berhasil login
+            header("Location: ../pages/dashboard.php");
             exit;
         } else {
             $message = "Kombinasi username dan password salah.";
@@ -65,8 +70,6 @@ if (isset($_POST['login'])) {
     $stmt->close();
 }
 $conn->close();
-
-// Bagian Header khusus untuk halaman login agar path CSS benar
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -76,11 +79,7 @@ $conn->close();
     <title>Login & Registrasi - AbsensiCorp</title>
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body {
-            background-color: #e9ecef;
-        }
-    </style>
+    <style> body { background-color: #e9ecef; } </style>
 </head>
 <body>
 <div class="container">
