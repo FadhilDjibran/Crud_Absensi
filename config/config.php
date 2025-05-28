@@ -1,10 +1,15 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 // File: config/config.php
 
 // Pastikan session selalu dimulai di paling atas
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// BARU: Atur zona waktu default ke Waktu Indonesia Barat
+date_default_timezone_set('Asia/Jakarta');
 
 // Untuk menampilkan error jika ada (berguna saat development)
 ini_set('display_errors', 1);
