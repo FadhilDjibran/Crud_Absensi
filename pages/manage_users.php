@@ -1,21 +1,16 @@
 <?php
-// File: pages/manage_users.php
-require_once '../config/config.php'; 
+// File: pages/manage_users.php (Versi dengan Modal Hapus)
+require_once '../config/config.php';
+require_once '../auth/auth.php';
 
-// otentikasi user apakah login
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['flash_message'] = "Silakan login untuk mengakses halaman ini.";
-    $_SESSION['flash_message_type'] = "warning";
-    header("Location: ../auth/login.php");
+// Hanya admin yang bisa akses
+if ($_SESSION['role'] !== 'admin') {
+    header("Location: dashboard.php");
     exit;
 }
 
 $page_title = "Manajemen Pengguna";
-require_once '../includes/header.php'; // header
-
 $current_user_id = $_SESSION['user_id'];
-$current_user_role = $_SESSION['role'];
-
 $message = '';
 $message_type = '';
 
@@ -25,13 +20,14 @@ if (isset($_SESSION['flash_message'])) {
     unset($_SESSION['flash_message']);
     unset($_SESSION['flash_message_type']);
 }
+
+include '../includes/header.php';
 ?>
 
 <div class="container mt-4">
-    <div class="row mb-3">
-        <div class="col">
-            <h2><?php echo htmlspecialchars($page_title); ?></h2>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0"><i class="bi bi-people-fill"></i> <?php echo htmlspecialchars($page_title); ?></h2>
+        <a href="add_user.php" class="btn btn-success"><i class="bi bi-plus-circle-fill"></i> Tambah Pengguna Baru</a>
     </div>
 
     <?php if ($message): ?>
@@ -41,111 +37,101 @@ if (isset($_SESSION['flash_message'])) {
         </div>
     <?php endif; ?>
 
-    <?php if ($current_user_role === 'admin'): ?>
-        <div class="mb-3">
-            <a href="add_user.php" class="btn btn-success"><i class="bi bi-plus-circle-fill"></i> Tambah Pengguna Baru</a>
-        </div>
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="bi bi-people-fill"></i> Daftar Semua Pengguna</h4>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Role</th>
-                                <th style="width: 15%;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            // ambil semua user untuk admin
-                            $stmt_users = $conn->prepare("SELECT id, username, role FROM users ORDER BY username ASC");
-                            $stmt_users->execute();
-                            $result_users = $stmt_users->get_result();
-                            
-                            if ($result_users->num_rows > 0):
-                                while ($user = $result_users->fetch_assoc()):
-                            ?>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $stmt_users = $conn->prepare("SELECT id, username, role FROM users ORDER BY role ASC, username ASC");
+                        $stmt_users->execute();
+                        $result_users = $stmt_users->get_result();
+
+                        if ($result_users->num_rows > 0):
+                            while ($user = $result_users->fetch_assoc()):
+                        ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($user['id']); ?></td>
                                     <td><?php echo htmlspecialchars($user['username']); ?></td>
-                                    <td><?php echo htmlspecialchars(ucfirst($user['role'])); ?></td>
-                                    <td>
-                                        <a href="edit_user.php?id=<?php echo htmlspecialchars($user['id']); ?>" class="btn btn-sm btn-primary me-1" title="Edit"><i class="bi bi-pencil-square"></i></a>
-                                        <?php if ($user['id'] !== $current_user_id): // cegah admin menghapus user mereka lewat tombol hapus ?>
-                                            <a href="delete_user.php?id=<?php echo htmlspecialchars($user['id']); ?>" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus pengguna \'<?php echo htmlspecialchars(addslashes($user['username'])); ?>\'? Tindakan ini tidak dapat diurungkan.');"><i class="bi bi-trash-fill"></i></a>
+                                    <td><span class="badge <?php echo $user['role'] == 'admin' ? 'bg-primary' : 'bg-secondary'; ?>"><?php echo htmlspecialchars(ucfirst($user['role'])); ?></span></td>
+                                    <td class="text-center">
+                                        <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-warning me-1" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                                        <?php if ($user['id'] !== $current_user_id): ?>
+                                            <button type="button" class="btn btn-sm btn-danger delete-user-btn"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#userDeleteModal"
+                                                data-user-id="<?php echo $user['id']; ?>"
+                                                data-user-name="<?php echo htmlspecialchars($user['username']); ?>">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
                                         <?php else: ?>
-                                            <button class="btn btn-sm btn-secondary" title="Anda tidak dapat menghapus akun Anda sendiri di sini" disabled><i class="bi bi-trash-fill"></i></button>
+                                            <button class="btn btn-sm btn-secondary" title="Anda tidak dapat menghapus akun Anda sendiri" disabled><i class="bi bi-trash-fill"></i></button>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php
-                                endwhile;
-                            else:
+                            endwhile;
+                        else:
                             ?>
-                                <tr>
-                                    <td colspan="4" class="text-center">Tidak ada pengguna yang terdaftar.</td>
-                                </tr>
-                            <?php
-                            endif;
-                            $stmt_users->close();
-                            ?>
-                        </tbody>
-                    </table>
-                </div>
+                            <tr>
+                                <td colspan="4" class="text-center">Tidak ada pengguna yang terdaftar.</td>
+                            </tr>
+                        <?php
+                        endif;
+                        $stmt_users->close();
+                        ?>
+                    </tbody>
+                </table>
             </div>
         </div>
-
-    <?php elseif ($current_user_role === 'karyawan'): ?>
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="bi bi-person-badge-fill"></i> Profil Saya</h4>
-            </div>
-            <div class="card-body">
-                <?php
-                // ambil data karyawan
-                $stmt_karyawan = $conn->prepare("SELECT id, username, role FROM users WHERE id = ?");
-                $stmt_karyawan->bind_param("i", $current_user_id);
-                $stmt_karyawan->execute();
-                $result_karyawan = $stmt_karyawan->get_result();
-                
-                if ($user_data = $result_karyawan->fetch_assoc()):
-                ?>
-                    <dl class="row">
-                        <dt class="col-sm-3">ID Pengguna</dt>
-                        <dd class="col-sm-9"><?php echo htmlspecialchars($user_data['id']); ?></dd>
-
-                        <dt class="col-sm-3">Username</dt>
-                        <dd class="col-sm-9"><?php echo htmlspecialchars($user_data['username']); ?></dd>
-
-                        <dt class="col-sm-3">Role</dt>
-                        <dd class="col-sm-9"><?php echo htmlspecialchars(ucfirst($user_data['role'])); ?></dd>
-                    </dl>
-                    <hr>
-                    <a href="profile.php" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Edit Profil Saya</a>
-                <?php else: ?>
-                    <div class="alert alert-danger" role="alert">
-                        Gagal memuat data profil Anda. Silakan coba lagi nanti.
-                    </div>
-                <?php
-                endif;
-                $stmt_karyawan->close();
-                ?>
-            </div>
-        </div>
-
-    <?php else: ?>
-        <div class="alert alert-danger" role="alert">
-            Role Anda tidak dikenali atau Anda tidak memiliki akses yang sesuai.
-        </div>
-    <?php endif; ?>
-
+    </div>
 </div>
 
-<?php
-require_once '../includes/footer.php'; //footer
-?>
+<div class="modal fade" id="userDeleteModal" tabindex="-1" aria-labelledby="userDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="userDeleteModalLabel"><i class="bi bi-exclamation-triangle-fill"></i> Konfirmasi Hapus Pengguna</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Apakah Anda yakin ingin menghapus pengguna <strong id="usernameToDelete"></strong>?
+                <p class="text-danger small mt-2">Peringatan: Tindakan ini tidak dapat dibatalkan!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <a href="#" id="confirmUserDeleteBtn" class="btn btn-danger">Ya, Hapus Pengguna</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<?php include '../includes/footer.php'; ?>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var userDeleteModal = document.getElementById('userDeleteModal');
+        if (userDeleteModal) {
+            userDeleteModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var userId = button.getAttribute('data-user-id');
+                var userName = button.getAttribute('data-user-name');
+
+                var modalUsername = userDeleteModal.querySelector('#usernameToDelete');
+                var confirmButton = userDeleteModal.querySelector('#confirmUserDeleteBtn');
+
+                modalUsername.textContent = userName;
+                confirmButton.href = 'delete_user.php?id=' + userId;
+            });
+        }
+    });
+</script>

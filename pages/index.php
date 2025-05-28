@@ -3,7 +3,7 @@
 
 //Memuat file konfigurasi dan otentikasi
 require_once '../config/config.php';
-require_once '../auth/auth.php'; 
+require_once '../auth/auth.php';
 
 // Logika untuk Notifikasi (Flash Message) 
 // Cek apakah ada pesan 'flash_message' di session, tampilkan, lalu hapus.
@@ -12,7 +12,7 @@ $flash_message_type = ''; // Variable to hold the message type (e.g., 'success',
 
 if (isset($_SESSION['flash_message'])) {
     $flash_message_text = $_SESSION['flash_message'];
-    $flash_message_type = $_SESSION['flash_message_type'] ?? 'success'; 
+    $flash_message_type = $_SESSION['flash_message_type'] ?? 'success';
     unset($_SESSION['flash_message']);
     unset($_SESSION['flash_message_type']);
 }
@@ -30,7 +30,7 @@ $types = '';
 
 if ($_SESSION['role'] == 'karyawan') {
     $where_parts[] = "nama = ?";
-    $params[] = &$_SESSION['username']; 
+    $params[] = &$_SESSION['username'];
     $types .= 's';
 }
 
@@ -48,23 +48,23 @@ if (!empty($where_parts)) {
 
 $count_params_ref = [];
 $count_types = $types;
-foreach ($params as $key => $value) { 
-    $count_params_ref[$key] = $value; 
+foreach ($params as $key => $value) {
+    $count_params_ref[$key] = $value;
 }
 
 // Query utama untuk mengambil data absensi
 $base_sql = "SELECT * FROM absensi" . $where_clause . " ORDER BY tanggal DESC, id DESC LIMIT ?, ?";
-$params_for_data_query = $params; 
+$params_for_data_query = $params;
 $params_for_data_query[] = &$mulai;
 $params_for_data_query[] = &$batas;
 $types_for_data_query = $types . 'ii';
 
 
 $stmt = $conn->prepare($base_sql);
-if (!empty($params_for_data_query)) { 
+if (!empty($params_for_data_query)) {
     $bind_args = [$types_for_data_query];
     foreach ($params_for_data_query as $key => $value) {
-        $bind_args[] = &$params_for_data_query[$key]; 
+        $bind_args[] = &$params_for_data_query[$key];
     }
     call_user_func_array([$stmt, 'bind_param'], $bind_args);
 }
@@ -75,12 +75,12 @@ $result = $stmt->get_result();
 $count_sql = "SELECT COUNT(*) AS total FROM absensi" . $where_clause;
 $count_stmt = $conn->prepare($count_sql);
 
-if(!empty($count_params_ref)) { 
+if (!empty($count_params_ref)) {
     $bind_args_count = [$count_types];
     foreach ($count_params_ref as $key => $value) {
         $bind_args_count[] = &$count_params_ref[$key];
     }
-     call_user_func_array([$count_stmt, 'bind_param'], $bind_args_count);
+    call_user_func_array([$count_stmt, 'bind_param'], $bind_args_count);
 }
 $count_stmt->execute();
 $total = $count_stmt->get_result()->fetch_assoc()['total'];
@@ -100,10 +100,10 @@ include '../includes/header.php';
 </div>
 
 <?php if (!empty($flash_message_text)): ?>
-<div class="alert alert-<?php echo htmlspecialchars($flash_message_type); ?> alert-dismissible fade show" role="alert">
-    <?php echo htmlspecialchars($flash_message_text); ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
+    <div class="alert alert-<?php echo htmlspecialchars($flash_message_type); ?> alert-dismissible fade show" role="alert">
+        <?php echo htmlspecialchars($flash_message_text); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <?php endif; ?>
 
 <!-- tampilan tabel -->
@@ -143,7 +143,7 @@ include '../includes/header.php';
                             if ($row['status'] == 'Izin') $status_color = 'warning text-dark';
                             if ($row['status'] == 'Sakit') $status_color = 'info text-dark';
                             if ($row['status'] == 'Alpha') $status_color = 'danger';
-                            
+
                             echo "<tr>
                                 <td>{$no}</td>
                                 <td>" . htmlspecialchars($row['nama']) . "</td>
@@ -151,16 +151,16 @@ include '../includes/header.php';
                                 <td><span class='badge bg-{$status_color}'>" . htmlspecialchars($row['status']) . "</span></td>
                                 <td class='text-center'>";
 
-                                if ($_SESSION['role'] == 'admin') {
-                                    echo "<a href='edit.php?id={$row['id']}' class='btn btn-warning btn-sm me-1' title='Edit'><i class='bi bi-pencil-square'></i></a>
+                            if ($_SESSION['role'] == 'admin') {
+                                echo "<a href='edit.php?id={$row['id']}' class='btn btn-warning btn-sm me-1' title='Edit'><i class='bi bi-pencil-square'></i></a>
                                           <button type='button' class='btn btn-danger btn-sm delete-btn' title='Hapus' data-bs-toggle='modal' data-bs-target='#deleteModal' data-id='{$row['id']}' data-nama='" . htmlspecialchars($row['nama']) . "'>
                                               <i class='bi bi-trash-fill'></i>
                                           </button>";
-                                } else {
-                                    echo "-";
-                                }
-                                
-                                echo "</td>
+                            } else {
+                                echo "-";
+                            }
+
+                            echo "</td>
                             </tr>";
                             $no++;
                         }
@@ -173,59 +173,59 @@ include '../includes/header.php';
         </div>
     </div>
     <div class="card-footer bg-white">
-        <?php if($total > $batas): ?>
-        <nav>
-            <ul class="pagination justify-content-center m-0">
-                <?php for ($i = 1; $i <= $jumlahHalaman; $i++): ?>
-                    <li class="page-item <?= ($i == $halaman) ? 'active' : '' ?>">
-                        <a class="page-link" href="?halaman=<?= $i ?>&cari=<?= urlencode($cari) ?>"><?= $i ?></a>
-                    </li>
-                <?php endfor; ?>
-            </ul>
-        </nav>
+        <?php if ($total > $batas): ?>
+            <nav>
+                <ul class="pagination justify-content-center m-0">
+                    <?php for ($i = 1; $i <= $jumlahHalaman; $i++): ?>
+                        <li class="page-item <?= ($i == $halaman) ? 'active' : '' ?>">
+                            <a class="page-link" href="?halaman=<?= $i ?>&cari=<?= urlencode($cari) ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+                </ul>
+            </nav>
         <?php endif; ?>
     </div>
 </div>
 
 <!-- konfirmasi -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-exclamation-triangle-fill"></i> Konfirmasi Penghapusan</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Apakah Anda yakin ingin menghapus data absensi untuk <strong id="namaKaryawanModal"></strong>?
-        <p class="text-muted small mt-2">Tindakan ini tidak dapat dibatalkan.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <a href="#" id="confirmDeleteBtnModal" class="btn btn-danger">Ya, Hapus</a>
-      </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-exclamation-triangle-fill"></i> Konfirmasi Penghapusan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Apakah Anda yakin ingin menghapus data absensi untuk <strong id="namaKaryawanModal"></strong>?
+                <p class="text-muted small mt-2">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <a href="#" id="confirmDeleteBtnModal" class="btn btn-danger">Ya, Hapus</a>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var deleteModal = document.getElementById('deleteModal');
-    if (deleteModal) { // Check if modal exists
-        deleteModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var id = button.getAttribute('data-id');
-            var nama = button.getAttribute('data-nama');
-            
-            var modalBodyNama = deleteModal.querySelector('#namaKaryawanModal'); 
-            var confirmButton = deleteModal.querySelector('#confirmDeleteBtnModal'); 
-            
-            if(modalBodyNama) modalBodyNama.textContent = nama;
-            if(confirmButton) confirmButton.href = 'hapus.php?id=' + id; 
-        });
-    }
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        var deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) { // Check if modal exists
+            deleteModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var id = button.getAttribute('data-id');
+                var nama = button.getAttribute('data-nama');
+
+                var modalBodyNama = deleteModal.querySelector('#namaKaryawanModal');
+                var confirmButton = deleteModal.querySelector('#confirmDeleteBtnModal');
+
+                if (modalBodyNama) modalBodyNama.textContent = nama;
+                if (confirmButton) confirmButton.href = 'hapus.php?id=' + id;
+            });
+        }
+    });
 </script>
 
 <?php
-include '../includes/footer.php'; 
+include '../includes/footer.php';
 ?>
