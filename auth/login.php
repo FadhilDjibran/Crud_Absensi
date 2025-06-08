@@ -4,7 +4,7 @@ require_once '../config/config.php'; // This should ideally call session_start()
 
 // Jika sudah login, langsung arahkan ke dashboard
 if (isset($_SESSION['user_id'])) {
-    header("Location: ../pages/dashboard.php");
+    header("Location: ../halaman/dasbor.php");
     exit;
 }
 
@@ -30,7 +30,7 @@ if (isset($_POST['login'])) {
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
             
-            header("Location: ../pages/dashboard.php");
+            header("Location: ../halaman/dasbor.php");
             exit;
         } else {
             $message = "Kombinasi username dan password salah.";

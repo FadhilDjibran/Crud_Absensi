@@ -1,5 +1,7 @@
 <?php
-// File: pages/ajukan_izin_sakit.php
+// File: fungsi/logika_pengajuan_izin.php
+// Berisi semua logika backend untuk halaman pengajuan izin atau sakit.
+
 require_once '../config/config.php'; // Memuat konfigurasi dan memulai session
 require_once '../auth/auth.php';     // Memastikan hanya pengguna yang terautentikasi
 
@@ -9,7 +11,7 @@ $page_title = "Form Pengajuan Izin/Sakit";
 if ($_SESSION['role'] === 'admin') {
     $_SESSION['flash_message'] = "Admin tidak dapat mengajukan izin/sakit melalui form ini.";
     $_SESSION['flash_message_type'] = "warning";
-    header("Location: dashboard.php");
+    header("Location: ../halaman/dasbor.php");
     exit;
 }
 
@@ -17,7 +19,7 @@ $current_user_id = $_SESSION['user_id'];
 $current_username = $_SESSION['username'];
 $tanggal_hari_ini = date('Y-m-d');
 
-// Cek apakah karyawan sudah memiliki pengajuan (pending/disetujui) atau absensi final untuk hari ini
+// Cek apakah karyawan sudah memiliki pengajuan (pending) atau absensi final untuk hari ini
 $sudah_ada_absensi_atau_pengajuan = false;
 // Cek pengajuan pending
 $stmt_check_pending = $conn->prepare("SELECT id FROM pengajuanAbsensi WHERE user_id = ? AND tanggal = ? AND status_review = 'pending'");
@@ -43,18 +45,19 @@ if (!$sudah_ada_absensi_atau_pengajuan) {
     $stmt_check_approved->close();
 }
 
-if ($sudah_ada_absensi_atau_pengajuan && $_SERVER['REQUEST_METHOD'] !== 'POST') { // Jangan redirect jika ini adalah hasil POST error
-    header("Location: dashboard.php");
+// Redirect ke dasbor jika sudah ada entri dan ini bukan hasil dari submit form yang error
+if ($sudah_ada_absensi_atau_pengajuan && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: ../halaman/dasbor.php");
     exit;
 }
 
-
-// Inisialisasi variabel untuk pesan flash dan form
+// Inisialisasi variabel untuk pesan flash dan sticky form
 $flash_message_text = '';
 $flash_message_type = '';
-$form_status_diajukan = $_POST['status_diajukan'] ?? ''; // Sticky form
+$form_status_diajukan = $_POST['status_diajukan'] ?? '';
 
-if (isset($_SESSION['flash_message']) && !isset($_POST['ajukan_submit'])) { // Tampilkan hanya jika bukan dari POST error di halaman ini
+// Tampilkan flash message dari halaman lain (jika ada)
+if (isset($_SESSION['flash_message']) && !isset($_POST['ajukan_submit'])) {
     $flash_message_text = $_SESSION['flash_message'];
     $flash_message_type = $_SESSION['flash_message_type'] ?? 'info';
     unset($_SESSION['flash_message']);
@@ -112,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_submit'])) {
                     if ($stmt_insert->execute()) {
                         $_SESSION['flash_message'] = "Pengajuan absensi (" . htmlspecialchars($status_diajukan) . ") Anda untuk hari ini telah berhasil dikirim dan menunggu review.";
                         $_SESSION['flash_message_type'] = "success";
-                        header("Location: dashboard.php");
+                        header("Location: ../halaman/dasbor.php"); // Redirect ke dasbor baru
                         exit;
                     } else {
                         $flash_message_text = "Gagal menyimpan pengajuan absensi ke database: " . htmlspecialchars($stmt_insert->error);
@@ -134,60 +137,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_submit'])) {
         }
     }
 }
-
-include '../includes/header.php'; // Memuat header HTML
-?>
-
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-7">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="m-0"><i class="bi bi-journal-medical"></i> <?php echo htmlspecialchars($page_title); ?></h2>
-                <a href="dashboard.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>
-            </div>
-
-            <?php if (!empty($flash_message_text)): ?>
-            <div class="alert alert-<?php echo htmlspecialchars($flash_message_type); ?> alert-dismissible fade show" role="alert">
-                <?php echo htmlspecialchars($flash_message_text); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <?php endif; ?>
-            
-            <?php if (!$sudah_ada_absensi_atau_pengajuan || $_SERVER['REQUEST_METHOD'] === 'POST'): // Tampilkan form jika belum ada pengajuan/absensi ATAU jika ini adalah hasil POST dengan error ?>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <p class="card-text">Anda akan mengajukan absensi untuk tanggal: <strong><?php echo date('d F Y', strtotime($tanggal_hari_ini)); ?></strong>.</p>
-                    <hr>
-                    <form method="POST" action="ajukan_izin_sakit.php" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="status_diajukan" class="form-label">Status Pengajuan <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-lg" id="status_diajukan" name="status_diajukan" required>
-                                <option value="" disabled <?php echo empty($form_status_diajukan) ? 'selected' : '';?>>-- Pilih Status --</option>
-                                <option value="Izin" <?php echo ($form_status_diajukan === 'Izin') ? 'selected' : ''; ?>>Izin</option>
-                                <option value="Sakit" <?php echo ($form_status_diajukan === 'Sakit') ? 'selected' : ''; ?>>Sakit</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="bukti_file" class="form-label">Unggah File Bukti <span class="text-danger">*</span></label>
-                            <input class="form-control form-control-lg" type="file" id="bukti_file" name="bukti_file" accept=".jpg, .jpeg, .png, .pdf" required>
-                            <small class="form-text text-muted">Format yang diizinkan: JPG, JPEG, PNG, PDF. Maksimal ukuran: 2MB.</small>
-                        </div>
-                        
-                        <div class="mt-4 d-grid">
-                            <button type="submit" name="ajukan_submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-send-fill me-2"></i>Kirim Pengajuan
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <?php endif; // Akhir dari if tampilkan form ?>
-        </div>
-    </div>
-</div>
-
-<?php 
-$conn->close();
-include '../includes/footer.php'; 
-?>
+// Variabel yang sudah disiapkan di sini akan tersedia untuk file tampilan.
