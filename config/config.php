@@ -28,4 +28,8 @@ $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {
     die("Koneksi ke database gagal: " . $conn->connect_error);
 }
+
+// PERUBAHAN: Menambahkan konstanta untuk jam masuk kantor
+define('JAM_MASUK_KANTOR', '08:00:00'); // Atur jam masuk di sini (Format: HH:MM:SS)
+
 ?>

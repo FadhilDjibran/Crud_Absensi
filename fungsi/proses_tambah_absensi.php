@@ -34,6 +34,12 @@ if (isset($_POST['tambah'])) {
     $user_id = $_POST['user_id']; 
     $tanggal = $_POST['tanggal'];
     $status = $_POST['status'];
+    $jam_masuk = !empty($_POST['jam_masuk']) ? $_POST['jam_masuk'] : null;
+    $bukti_file_info = $_FILES['bukti_file'];
+    
+    // Inisialisasi variabel untuk disimpan ke DB
+    $kondisi_masuk = null;
+    $path_bukti_file = null;
     
     // Ambil username berdasarkan user_id untuk disimpan di kolom 'nama'
     $stmt_get_user = $conn->prepare("SELECT username FROM users WHERE id = ?");
@@ -42,19 +48,37 @@ if (isset($_POST['tambah'])) {
     $user_data = $stmt_get_user->get_result()->fetch_assoc();
     $nama_pengguna = $user_data['username'] ?? 'User Tidak Dikenal';
 
-    if (empty($user_id) || empty($nama_pengguna) || empty($tanggal) || empty($status)) {
-        // Jika validasi gagal, siapkan pesan untuk ditampilkan di halaman form
-        $flash_message_text = "Semua kolom wajib diisi.";
-        $flash_message_type = "danger";
-    } else {
-        // Query INSERT sekarang menyertakan user_id dan nama
-        $stmt_insert = $conn->prepare("INSERT INTO absensi (user_id, nama, tanggal, status) VALUES (?, ?, ?, ?)");
-        $stmt_insert->bind_param("isss", $user_id, $nama_pengguna, $tanggal, $status);
+    // Logika berdasarkan status yang dipilih
+    if ($status === 'Hadir' && !empty($jam_masuk)) {
+        $kondisi_masuk = ($jam_masuk > JAM_MASUK_KANTOR) ? 'Terlambat' : 'Tepat Waktu';
+    } elseif (in_array($status, ['Izin', 'Sakit']) && !empty($bukti_file_info['name'])) {
+        // Proses upload file bukti
+        $upload_dir = "../uploads/bukti_absensi/";
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0775, true);
+
+        $file_extension = strtolower(pathinfo($bukti_file_info['name'], PATHINFO_EXTENSION));
+        $unique_filename = uniqid('bukti_admin_', true) . '.' . $file_extension;
+        $destination_path = $upload_dir . $unique_filename;
+
+        if (move_uploaded_file($bukti_file_info['tmp_name'], $destination_path)) {
+            $path_bukti_file = "uploads/bukti_absensi/" . $unique_filename;
+        } else {
+            $flash_message_text = "Gagal mengunggah file bukti.";
+            $flash_message_type = "danger";
+        }
+    }
+
+    if (empty($flash_message_text)) { // Lanjutkan jika tidak ada error upload
+        $stmt_insert = $conn->prepare(
+            "INSERT INTO absensi (user_id, nama, tanggal, jam_masuk, status, kondisi_masuk, bukti_file) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
+        );
+        $stmt_insert->bind_param("issssss", $user_id, $nama_pengguna, $tanggal, $jam_masuk, $status, $kondisi_masuk, $path_bukti_file);
 
         if ($stmt_insert->execute()) {
             $_SESSION['flash_message'] = "Data absensi manual untuk " . htmlspecialchars($nama_pengguna) . " berhasil ditambahkan!";
             $_SESSION['flash_message_type'] = "success";
-            header("Location: ../halaman/absensi.php"); // Redirect ke halaman daftar absensi baru
+            header("Location: ../halaman/absensi.php");
             exit();
         } else {
             $flash_message_text = "Gagal menambahkan data: " . $stmt_insert->error;

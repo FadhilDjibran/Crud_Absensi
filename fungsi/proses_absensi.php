@@ -20,7 +20,7 @@ if (isset($_SESSION['flash_message'])) {
 
 // Konfigurasi Paginasi
 $batas = 10; // Jumlah data per halaman
-$halaman = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
+$halaman = isset($_GET['halaman']) && is_numeric($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
 $mulai = ($halaman > 0) ? (($halaman - 1) * $batas) : 0; // Pastikan 'mulai' tidak bernilai negatif
 
 // Logika Pencarian & Peran Pengguna (User Role)
@@ -50,8 +50,12 @@ if (!empty($where_parts)) {
     $where_clause = ' WHERE ' . implode(' AND ', $where_parts);
 }
 
-// Query utama untuk mengambil data absensi dengan JOIN ke tabel users
-$sql_data = "SELECT absensi.*, users.username FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause . " ORDER BY absensi.tanggal DESC, absensi.id DESC LIMIT ?, ?";
+// PERBAIKAN: Query utama sekarang juga mengambil 'jam_masuk' dan 'kondisi_masuk' dari tabel absensi
+$sql_data = "SELECT absensi.id, absensi.user_id, absensi.nama, absensi.tanggal, absensi.jam_masuk, absensi.status, absensi.kondisi_masuk, users.username 
+             FROM absensi 
+             LEFT JOIN users ON absensi.user_id = users.id" 
+            . $where_clause . " ORDER BY absensi.tanggal DESC, absensi.id DESC LIMIT ?, ?";
+            
 $params_for_data_query = $params; 
 $params_for_data_query[] = $mulai;
 $params_for_data_query[] = $batas;
@@ -60,7 +64,13 @@ $types_for_data_query = $types . 'ii';
 $stmt = $conn->prepare($sql_data);
 if ($stmt) {
     if (!empty($types_for_data_query)) {
-        $stmt->bind_param($types_for_data_query, ...$params_for_data_query);
+        // Menggunakan call_user_func_array untuk bind_param dinamis yang lebih aman
+        $bind_args = array_merge([$types_for_data_query], $params_for_data_query);
+        $refs = [];
+        foreach ($bind_args as $key => $value) {
+            $refs[$key] = &$bind_args[$key];
+        }
+        call_user_func_array([$stmt, 'bind_param'], $refs);
     }
     $stmt->execute();
     $result = $stmt->get_result();
@@ -76,18 +86,20 @@ if ($stmt) {
 // Perlu JOIN juga agar filter pencarian berdasarkan username berfungsi
 $sql_hitung = "SELECT COUNT(absensi.id) AS total FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause;
 $stmt_hitung = $conn->prepare($sql_hitung);
+$total = 0;
+$jumlahHalaman = 0;
 if ($stmt_hitung) {
     if(!empty($types)) { 
-         $stmt_hitung->bind_param($types, ...$params);
+        $stmt_hitung->bind_param($types, ...$params);
     }
     $stmt_hitung->execute();
-    $total = $stmt_hitung->get_result()->fetch_assoc()['total'];
+    $total_result = $stmt_hitung->get_result()->fetch_assoc();
+    $total = $total_result['total'] ?? 0;
     $jumlahHalaman = ceil($total / $batas);
+    $stmt_hitung->close();
 } else {
     // Menangani error jika prepare statement gagal
     error_log("Gagal mempersiapkan statement hitung: " . $conn->error);
-    $total = 0;
-    $jumlahHalaman = 0;
 }
 
 // Semua variabel yang dibutuhkan oleh view sudah siap.

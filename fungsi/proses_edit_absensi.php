@@ -25,7 +25,6 @@ $id = (int)$_GET['id'];
 $page_title = "Edit Data Absensi";
 
 // Ambil data absensi saat ini dari database untuk ditampilkan di form
-// CATATAN: Diasumsikan tabel 'absensi' sudah memiliki kolom 'bukti_file'
 $stmt_select = $conn->prepare("SELECT absensi.*, users.username FROM absensi LEFT JOIN users ON absensi.user_id = users.id WHERE absensi.id = ?");
 $stmt_select->bind_param("i", $id);
 $stmt_select->execute();
@@ -41,18 +40,23 @@ if (!$data_absensi) {
 }
 
 // Siapkan variabel untuk ditampilkan di view
-$user_id_db = $data_absensi['user_id'];
 $nama_karyawan_db = $data_absensi['username'] ?? $data_absensi['nama']; // Fallback ke nama jika username null
 $tanggal_absensi_db = $data_absensi['tanggal'];
 $status_absensi_db = $data_absensi['status'];
-$bukti_file_db = $data_absensi['bukti_file'] ?? null; // Nama file bukti yang ada di database
+$jam_masuk_db = $data_absensi['jam_masuk'];
+$bukti_file_db = $data_absensi['bukti_file'];
 
 // Proses Update Data jika form disubmit
 if (isset($_POST['update'])) {
     $tanggal_form = $_POST['tanggal'];
     $status_form = $_POST['status'];
+    $jam_masuk_form = !empty($_POST['jam_masuk']) ? $_POST['jam_masuk'] : null;
+    
     $hapus_bukti_saat_ini = isset($_POST['hapus_bukti_saat_ini']);
     $file_bukti_baru_info = $_FILES['file_bukti_baru'];
+    
+    // Inisialisasi variabel untuk update
+    $kondisi_masuk_baru = null;
     $path_db_untuk_bukti = $bukti_file_db; // Defaultnya pakai path lama
 
     // 1. Logika Hapus File Bukti yang Ada Jika Diminta
@@ -73,14 +77,14 @@ if (isset($_POST['update'])) {
         }
 
         // Proses unggah file baru
-        $upload_dir = "../uploads/bukti_absensi/"; // Direktori standar
+        $upload_dir = "../uploads/bukti_absensi/"; 
         if (!is_dir($upload_dir)) mkdir($upload_dir, 0775, true);
 
         $file_extension = strtolower(pathinfo($file_bukti_baru_info['name'], PATHINFO_EXTENSION));
         $unique_filename = uniqid('bukti_update_', true) . '.' . $file_extension;
         $destination_path = $upload_dir . $unique_filename;
 
-        // Validasi file (sama seperti di ajukan_izin.php)
+        // Validasi file
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'pdf'];
         $max_file_size = 2 * 1024 * 1024; // 2MB
 
@@ -99,22 +103,38 @@ if (isset($_POST['update'])) {
              header("Location: ../halaman/edit_absensi.php?id=" . $id);
              exit();
         }
-    } elseif ($status_form == 'Alpha' && !empty($path_db_untuk_bukti)) {
-        // Jika status diubah menjadi Alpha dan ada file bukti, hapus filenya.
-        if (file_exists("../" . $path_db_untuk_bukti)) {
-            unlink("../" . $path_db_untuk_bukti);
-        }
-        $path_db_untuk_bukti = null;
     }
 
-    // 3. Update Database
-    $stmt_update = $conn->prepare("UPDATE absensi SET tanggal = ?, status = ?, bukti_file = ? WHERE id = ?");
-    $stmt_update->bind_param("sssi", $tanggal_form, $status_form, $path_db_untuk_bukti, $id);
+    // 3. Menentukan nilai akhir untuk kolom-kolom terkait status
+    if ($status_form == 'Hadir') {
+        // Jika status Hadir, tentukan kondisi masuk. Bukti file di-NULL-kan.
+        if (!empty($jam_masuk_form)) {
+            $kondisi_masuk_baru = ($jam_masuk_form > JAM_MASUK_KANTOR) ? 'Terlambat' : 'Tepat Waktu';
+        }
+        // Jika ada bukti file lama dan status diubah menjadi Hadir, hapus file lama.
+        if (!empty($path_db_untuk_bukti)) {
+            if (file_exists("../" . $path_db_untuk_bukti)) unlink("../" . $path_db_untuk_bukti);
+        }
+        $path_db_untuk_bukti = null;
+    } else {
+        // Jika status bukan Hadir, jam_masuk dan kondisi_masuk di-NULL-kan.
+        $jam_masuk_form = null;
+        $kondisi_masuk_baru = null;
+        // Jika status diubah jadi Alpha dan ada file bukti, hapus filenya.
+        if ($status_form == 'Alpha' && !empty($path_db_untuk_bukti)) {
+            if (file_exists("../" . $path_db_untuk_bukti)) unlink("../" . $path_db_untuk_bukti);
+            $path_db_untuk_bukti = null;
+        }
+    }
+
+    // 4. Update Database
+    $stmt_update = $conn->prepare("UPDATE absensi SET tanggal = ?, jam_masuk = ?, status = ?, kondisi_masuk = ?, bukti_file = ? WHERE id = ?");
+    $stmt_update->bind_param("sssssi", $tanggal_form, $jam_masuk_form, $status_form, $kondisi_masuk_baru, $path_db_untuk_bukti, $id);
 
     if ($stmt_update->execute()) {
         $_SESSION['flash_message'] = "Data absensi untuk " . htmlspecialchars($nama_karyawan_db) . " berhasil diperbarui!";
         $_SESSION['flash_message_type'] = "success";
-        header("Location: ../halaman/absensi.php"); // Redirect ke halaman daftar absensi
+        header("Location: ../halaman/absensi.php");
         exit();
     } else {
         $_SESSION['flash_message'] = "Gagal memperbarui data absensi. Error: " . htmlspecialchars($stmt_update->error);
@@ -134,5 +154,3 @@ if (isset($_SESSION['flash_message'])) {
     unset($_SESSION['flash_message']);
     unset($_SESSION['flash_message_type']);
 }
-
-// Variabel yang sudah disiapkan di sini akan tersedia untuk file tampilan.

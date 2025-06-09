@@ -28,8 +28,7 @@ $aksi = $_GET['aksi']; // 'setujui' atau 'tolak'
 $admin_user_id = $_SESSION['user_id']; // ID admin yang melakukan review (opsional jika ingin dicatat)
 
 // Mengambil detail pengajuan dari database untuk diproses
-// PERBAIKAN: Menambahkan kolom 'bukti_file' ke dalam SELECT
-$stmt_get_pengajuan = $conn->prepare("SELECT user_id, nama, tanggal, status_diajukan, status_review, bukti_file FROM pengajuanAbsensi WHERE id = ?");
+$stmt_get_pengajuan = $conn->prepare("SELECT user_id, nama, tanggal, status_diajukan, status_review, bukti_file, jam_masuk, kondisi_masuk FROM pengajuanAbsensi WHERE id = ?");
 if (!$stmt_get_pengajuan) {
     $_SESSION['flash_message'] = "Gagal mempersiapkan query untuk mengambil data pengajuan: " . $conn->error;
     $_SESSION['flash_message_type'] = "danger";
@@ -72,21 +71,21 @@ try {
         $stmt_update_pengajuan->close();
 
         // 2. Masukkan data ke tabel absensi (data final)
-        // PERBAIKAN: Menambahkan kolom 'bukti_file' ke dalam INSERT
         $stmt_insert_absensi = $conn->prepare(
-            "INSERT INTO absensi (user_id, nama, tanggal, status, bukti_file) VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO absensi (user_id, nama, tanggal, jam_masuk, status, kondisi_masuk, bukti_file) VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
         if (!$stmt_insert_absensi) throw new Exception("Gagal mempersiapkan query insert absensi: " . $conn->error);
 
         // Menggunakan data dari pengajuan untuk dimasukkan ke tabel absensi
-        // PERBAIKAN: Menambahkan 'bukti_file' ke bind_param, mengubah tipe menjadi "issss"
         $stmt_insert_absensi->bind_param(
-            "issss", 
+            "issssss", 
             $pengajuan['user_id'], 
             $pengajuan['nama'], 
             $pengajuan['tanggal'], 
+            $pengajuan['jam_masuk'], 
             $pengajuan['status_diajukan'],
-            $pengajuan['bukti_file'] // Menambahkan path file bukti
+            $pengajuan['kondisi_masuk'],
+            $pengajuan['bukti_file']
         );
         if (!$stmt_insert_absensi->execute()) throw new Exception("Gagal memasukkan data ke tabel absensi: " . $stmt_insert_absensi->error);
         $stmt_insert_absensi->close();

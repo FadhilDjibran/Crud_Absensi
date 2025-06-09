@@ -59,7 +59,7 @@ if (!$is_admin) {
         $stmt_cek_absensi_final->close();
     }
 } else { // Jika Admin, ambil data pengajuan yang masih pending
-    $sql_pengajuan_pending = "SELECT pa.id, pa.user_id, pa.nama AS nama_pengaju, pa.tanggal, pa.status_diajukan, pa.bukti_file, u.username 
+    $sql_pengajuan_pending = "SELECT pa.id, pa.user_id, pa.nama AS nama_pengaju, pa.tanggal, pa.jam_masuk, pa.kondisi_masuk, pa.status_diajukan, pa.bukti_file, u.username 
                               FROM pengajuanAbsensi pa
                               JOIN users u ON pa.user_id = u.id
                               WHERE pa.status_review = 'pending' ORDER BY pa.created_at ASC";

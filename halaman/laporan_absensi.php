@@ -5,9 +5,6 @@
 // Memuat file proses yang akan menyiapkan semua variabel yang dibutuhkan
 require_once '../fungsi/proses_laporan_absensi.php';
 
-// PERBAIKAN: Helper tidak lagi dipanggil
-// require_once '../includes/paginasi_helper.php';
-
 // Memuat header HTML
 include '../includes/header.php';
 ?>
@@ -19,7 +16,9 @@ include '../includes/header.php';
 
 <!-- Form Filter Laporan -->
 <div class="card shadow-sm mb-4">
-    <div class="card-header"><strong>Filter Laporan</strong></div>
+    <div class="card-header">
+        <strong>Filter Laporan</strong>
+    </div>
     <div class="card-body">
         <form method="GET" action="laporan_absensi.php" class="row g-3 align-items-end">
             <div class="col-md-4">
@@ -69,13 +68,14 @@ include '../includes/header.php';
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong>Hasil Laporan</strong>
-        <?php if (!empty($laporan_data)): ?>
+        <?php if (!empty($laporan_data)): // Hanya tampilkan tombol ekspor jika ada data ?>
         <a href="../fungsi/proses_ekspor_laporan.php?<?= http_build_query($_GET) ?>" class="btn btn-sm btn-success">
             <i class="bi bi-file-earmark-excel-fill"></i> Ekspor ke CSV
         </a>
         <?php endif; ?>
     </div>
     <div class="card-body">
+        <!-- Ringkasan Statistik -->
         <div class="row g-3 mb-4 text-center">
             <div class="col"><div class="p-3 bg-success text-white rounded"><h5>Hadir<br><?= $stats_laporan['Hadir'] ?></h5></div></div>
             <div class="col"><div class="p-3 bg-warning text-dark rounded"><h5>Izin<br><?= $stats_laporan['Izin'] ?></h5></div></div>
@@ -83,10 +83,19 @@ include '../includes/header.php';
             <div class="col"><div class="p-3 bg-danger text-white rounded"><h5>Alpha<br><?= $stats_laporan['Alpha'] ?></h5></div></div>
         </div>
 
+        <!-- Tabel Detail Laporan -->
         <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover">
+            <table class="table table-bordered table-striped table-hover align-middle">
                 <thead class="table-dark">
-                    <tr><th>No</th><th>Nama Karyawan</th><th>Tanggal</th><th>Status</th></tr>
+                    <!-- PERBAIKAN: Menambahkan header kolom Jam Masuk dan Kondisi -->
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Karyawan</th>
+                        <th class="text-center">Tanggal</th>
+                        <th class="text-center">Jam Masuk</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Kondisi</th>
+                    </tr>
                 </thead>
                 <tbody>
                     <?php if (!empty($laporan_data)): ?>
@@ -94,18 +103,43 @@ include '../includes/header.php';
                             <tr>
                                 <td><?= $mulai + $index + 1 ?></td>
                                 <td><?= htmlspecialchars($item['username'] ?? $item['nama']) ?></td>
-                                <td><?= date('d F Y', strtotime($item['tanggal'])) ?></td>
-                                <td><?= htmlspecialchars($item['status']) ?></td>
+                                <td class="text-center"><?= date('d F Y', strtotime($item['tanggal'])) ?></td>
+                                <!-- PERBAIKAN: Menambahkan sel data untuk Jam Masuk -->
+                                <td class="text-center"><?= $item['jam_masuk'] ? date('H:i', strtotime($item['jam_masuk'])) : '-' ?></td>
+                                <td class="text-center">
+                                    <?php
+                                    $status_color = 'secondary';
+                                    if ($item['status'] == 'Hadir') $status_color = 'success';
+                                    else if ($item['status'] == 'Izin') $status_color = 'warning text-dark';
+                                    else if ($item['status'] == 'Sakit') $status_color = 'info text-dark';
+                                    else if ($item['status'] == 'Alpha') $status_color = 'danger';
+                                    ?>
+                                    <span class="badge bg-<?= $status_color ?>"><?= htmlspecialchars($item['status']) ?></span>
+                                </td>
+                                <!-- PERBAIKAN: Menambahkan sel data untuk Kondisi -->
+                                <td class="text-center">
+                                    <?php
+                                    $kondisi_badge = '-';
+                                    if ($item['status'] == 'Hadir' && !empty($item['kondisi_masuk'])) {
+                                        if ($item['kondisi_masuk'] == 'Tepat Waktu') {
+                                            $kondisi_badge = "<span class='badge bg-success'>Tepat Waktu</span>";
+                                        } elseif ($item['kondisi_masuk'] == 'Terlambat') {
+                                            $kondisi_badge = "<span class='badge bg-danger'>Terlambat</span>";
+                                        }
+                                    }
+                                    echo $kondisi_badge;
+                                    ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="4" class="text-center">Tidak ada data yang cocok dengan filter Anda.</td></tr>
+                        <tr><td colspan="6" class="text-center">Tidak ada data yang cocok dengan filter Anda.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
-    <!-- PERBAIKAN: Menambahkan footer kartu dengan paginasi yang terintegrasi -->
+    <!-- Menambahkan footer kartu dengan paginasi -->
     <div class="card-footer bg-white">
         <?php
         if ($jumlahHalaman > 1) {

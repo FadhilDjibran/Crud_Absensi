@@ -1,8 +1,8 @@
 <?php
 // File: halaman/edit_absensi.php
-// File ini hanya bertanggung jawab untuk menampilkan halaman form edit.
+// Menampilkan form untuk mengedit data absensi yang sudah disetujui.
 
-// Memuat file logika yang akan menyiapkan semua variabel yang dibutuhkan
+// Memuat file proses yang akan menyiapkan semua variabel yang dibutuhkan
 require_once '../fungsi/proses_edit_absensi.php';
 
 // Memuat header HTML
@@ -50,33 +50,44 @@ include '../includes/header.php';
                         </div>
                     </div>
 
-                    <hr>
-                    <h5 class="mt-3">Manajemen File Bukti</h5>
-                    <?php if (!empty($bukti_file_db)): ?>
-                        <div class="mb-3">
-                            <label class="form-label">Bukti Saat Ini:</label>
-                            <p>
-                                <a href="../<?php echo htmlspecialchars($bukti_file_db); ?>" target="_blank"><?php echo basename(htmlspecialchars($bukti_file_db)); ?></a>
-                            </p>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="hapus_bukti_saat_ini" value="1" id="hapusBuktiCheck">
-                                <label class="form-check-label text-danger" for="hapusBuktiCheck">
-                                    Hapus bukti saat ini (centang lalu simpan tanpa unggah baru).
-                                </label>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <p class="text-muted">Belum ada file bukti untuk data absensi ini.</p>
-                    <?php endif; ?>
-
-                    <div class="mb-3">
-                        <label for="file_bukti_baru" class="form-label">Unggah Bukti Baru (Opsional)</label>
+                    <!-- Input tambahan untuk Jam Masuk dan Bukti File -->
+                    <div id="input_jam_masuk" class="mb-3">
+                        <label for="jam_masuk" class="form-label">Jam Masuk</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-file-earmark-arrow-up"></i></span>
-                            <input type="file" class="form-control" id="file_bukti_baru" name="file_bukti_baru" accept=".jpg, .jpeg, .png, .pdf, image/gif">
+                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                            <input type="time" class="form-control" id="jam_masuk" name="jam_masuk" value="<?php echo htmlspecialchars($jam_masuk_db); ?>" step="1">
                         </div>
-                        <small class="form-text text-muted">Jika diisi, akan menggantikan bukti lama (jika ada). Maks 2MB.</small>
                     </div>
+
+                    <div id="input_bukti_file_container" class="mb-3">
+                        <h5 class="mt-4">Manajemen File Bukti</h5>
+                        <?php if (!empty($bukti_file_db)): ?>
+                            <div class="mb-3">
+                                <label class="form-label">Bukti Saat Ini:</label>
+                                <p>
+                                    <a href="../<?php echo htmlspecialchars($bukti_file_db); ?>" target="_blank"><?php echo basename(htmlspecialchars($bukti_file_db)); ?></a>
+                                </p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="hapus_bukti_saat_ini" value="1" id="hapusBuktiCheck">
+                                    <label class="form-check-label text-danger" for="hapusBuktiCheck">
+                                        Hapus bukti saat ini (centang lalu simpan tanpa unggah baru).
+                                    </label>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted">Belum ada file bukti untuk data absensi ini.</p>
+                        <?php endif; ?>
+
+                        <div class="mb-3">
+                            <label for="file_bukti_baru" class="form-label">Unggah Bukti Baru (Opsional)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-file-earmark-arrow-up"></i></span>
+                                <input type="file" class="form-control" id="file_bukti_baru" name="file_bukti_baru" accept=".jpg, .jpeg, .png, .pdf">
+                            </div>
+                            <small class="form-text text-muted">Jika diisi, akan menggantikan bukti lama (jika ada). Maks 2MB.</small>
+                        </div>
+                    </div>
+                    
                     <hr>
                     <div class="text-end mt-4">
                         <button type="submit" name="update" class="btn btn-primary"><i class="bi bi-save-fill me-2"></i>Update Data</button>
@@ -86,6 +97,33 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+// JavaScript untuk menampilkan/menyembunyikan input tambahan secara dinamis
+function toggleInputs() {
+    var status = document.getElementById('status').value;
+    var divJamMasuk = document.getElementById('input_jam_masuk');
+    var divBuktiFile = document.getElementById('input_bukti_file_container');
+
+    if (status === 'Hadir') {
+        divJamMasuk.style.display = 'block';
+        divBuktiFile.style.display = 'none';
+    } else if (status === 'Izin' || status === 'Sakit') {
+        divJamMasuk.style.display = 'none';
+        divBuktiFile.style.display = 'block';
+    } else { // Untuk Alpha atau status lain
+        divJamMasuk.style.display = 'none';
+        divBuktiFile.style.display = 'none';
+    }
+}
+
+// Panggil fungsi saat halaman dimuat untuk mengatur tampilan awal
+document.addEventListener('DOMContentLoaded', toggleInputs);
+
+// Panggil fungsi setiap kali status diubah
+document.getElementById('status').addEventListener('change', toggleInputs);
+</script>
+
 
 <?php 
 $conn->close(); 

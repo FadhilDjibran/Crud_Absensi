@@ -25,7 +25,7 @@ include '../includes/header.php';
 
         <div class="card shadow-sm">
             <div class="card-body">
-                <form method="POST" action="tambah_absensi.php">
+                <form method="POST" action="tambah_absensi.php" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="user_id" class="form-label">Nama Pengguna</label>
                         <div class="input-group">
@@ -69,6 +69,7 @@ include '../includes/header.php';
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-check-circle"></i></span>
                             <select name="status" id="status" class="form-select" required>
+                                <option value="" selected disabled>-- Pilih Status --</option>
                                 <option value="Hadir">Hadir</option>
                                 <option value="Izin">Izin</option>
                                 <option value="Sakit">Sakit</option>
@@ -76,6 +77,25 @@ include '../includes/header.php';
                             </select>
                         </div>
                     </div>
+
+                    <!-- PERBAIKAN: Input tambahan untuk Jam Masuk dan Bukti File -->
+                    <div id="input_jam_masuk" class="mb-3" style="display: none;">
+                        <label for="jam_masuk" class="form-label">Jam Masuk</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                            <input type="time" class="form-control" id="jam_masuk" name="jam_masuk" step="1">
+                        </div>
+                    </div>
+
+                    <div id="input_bukti_file" class="mb-3" style="display: none;">
+                        <label for="bukti_file" class="form-label">Unggah File Bukti (Opsional)</label>
+                        <div class="input-group">
+                             <span class="input-group-text"><i class="bi bi-file-earmark-arrow-up"></i></span>
+                            <input class="form-control" type="file" id="bukti_file" name="bukti_file" accept=".jpg, .jpeg, .png, .pdf">
+                        </div>
+                        <small class="form-text text-muted">Format: JPG, PNG, PDF. Maks: 2MB.</small>
+                    </div>
+
                     <div class="text-end">
                         <button type="submit" name="tambah" class="btn btn-primary"><i class="bi bi-save-fill me-2"></i>Simpan Data</button>
                     </div>
@@ -84,6 +104,26 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+// JavaScript untuk menampilkan/menyembunyikan input tambahan secara dinamis
+document.getElementById('status').addEventListener('change', function() {
+    var status = this.value;
+    var divJamMasuk = document.getElementById('input_jam_masuk');
+    var divBuktiFile = document.getElementById('input_bukti_file');
+
+    if (status === 'Hadir') {
+        divJamMasuk.style.display = 'block';
+        divBuktiFile.style.display = 'none';
+    } else if (status === 'Izin' || status === 'Sakit') {
+        divJamMasuk.style.display = 'none';
+        divBuktiFile.style.display = 'block';
+    } else {
+        divJamMasuk.style.display = 'none';
+        divBuktiFile.style.display = 'none';
+    }
+});
+</script>
 
 <?php 
 $conn->close();

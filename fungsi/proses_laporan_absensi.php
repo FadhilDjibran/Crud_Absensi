@@ -45,9 +45,9 @@ if (isset($_GET['tampilkan'])) {
     $filter_aktif = true;
     
     // Bangun query dinamis berdasarkan filter yang diterapkan
-    $where_parts = [];
-    $params = [];
-    $types = '';
+    $where_parts = []; // Array untuk menyimpan bagian dari klausa WHERE
+    $params = [];      // Array untuk menyimpan parameter yang akan di-bind
+    $types = '';       // String untuk menyimpan tipe data parameter
 
     if (!empty($filter_user_id)) {
         $where_parts[] = "absensi.user_id = ?";
@@ -65,8 +65,9 @@ if (isset($_GET['tampilkan'])) {
         $types .= 's';
     }
 
-    $where_clause = '';
+    $where_clause = ''; // Inisialisasi klausa WHERE
     if (!empty($where_parts)) {
+        // Menggabungkan semua bagian WHERE dengan 'AND'
         $where_clause = ' WHERE ' . implode(' AND ', $where_parts);
     }
 
@@ -85,7 +86,11 @@ if (isset($_GET['tampilkan'])) {
     // PERBAIKAN: Langkah 2 - Ambil data untuk halaman saat ini dengan LIMIT
     $mulai = ($halaman > 0) ? (($halaman - 1) * $batas) : 0;
     
-    $sql_laporan = "SELECT absensi.*, users.username FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause . " ORDER BY absensi.tanggal DESC, absensi.id DESC LIMIT ?, ?";
+    // PERBAIKAN: Query laporan sekarang mengambil juga jam_masuk dan kondisi_masuk
+    $sql_laporan = "SELECT absensi.id, absensi.nama, absensi.tanggal, absensi.jam_masuk, absensi.status, absensi.kondisi_masuk, users.username 
+                    FROM absensi 
+                    LEFT JOIN users ON absensi.user_id = users.id" 
+                   . $where_clause . " ORDER BY absensi.tanggal DESC, absensi.id DESC LIMIT ?, ?";
     
     // Tambahkan parameter untuk LIMIT ke query
     $params_for_data_query = $params;

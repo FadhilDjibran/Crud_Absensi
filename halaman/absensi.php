@@ -42,11 +42,14 @@ include '../includes/header.php';
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-dark">
+                    <!-- PERBAIKAN: Menambahkan kelas text-center pada header tabel -->
                     <tr>
                         <th>No</th>
                         <th>Nama Karyawan</th>
-                        <th>Tanggal</th>
-                        <th>Status</th>
+                        <th class="text-center">Tanggal</th>
+                        <th class="text-center">Jam Masuk</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Kondisi</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -55,17 +58,31 @@ include '../includes/header.php';
                     $no = $mulai + 1;
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
+                            // Logika untuk warna badge status
                             $status_color = 'secondary';
                             if ($row['status'] == 'Hadir') $status_color = 'success';
                             else if ($row['status'] == 'Izin') $status_color = 'warning text-dark';
                             else if ($row['status'] == 'Sakit') $status_color = 'info text-dark';
                             else if ($row['status'] == 'Alpha') $status_color = 'danger';
+
+                            // PERUBAHAN: Logika untuk badge kondisi masuk
+                            $kondisi_badge = '-'; // Default
+                            if ($row['status'] == 'Hadir' && !empty($row['kondisi_masuk'])) {
+                                if ($row['kondisi_masuk'] == 'Tepat Waktu') {
+                                    $kondisi_badge = "<span class='badge bg-success'>Tepat Waktu</span>";
+                                } elseif ($row['kondisi_masuk'] == 'Terlambat') {
+                                    $kondisi_badge = "<span class='badge bg-danger'>Terlambat</span>";
+                                }
+                            }
                             
+                            // PERBAIKAN: Menambahkan kelas text-center pada sel data
                             echo "<tr>
                                 <td>{$no}</td>
                                 <td>" . htmlspecialchars($row['username'] ?? $row['nama']) . "</td>
-                                <td>" . date('d F Y', strtotime($row['tanggal'])) . "</td>
-                                <td><span class='badge bg-{$status_color}'>" . htmlspecialchars($row['status']) . "</span></td>
+                                <td class='text-center'>" . date('d F Y', strtotime($row['tanggal'])) . "</td>
+                                <td class='text-center'>" . ($row['jam_masuk'] ? date('H:i', strtotime($row['jam_masuk'])) : '-') . "</td>
+                                <td class='text-center'><span class='badge bg-{$status_color}'>" . htmlspecialchars($row['status']) . "</span></td>
+                                <td class='text-center'>{$kondisi_badge}</td>
                                 <td class='text-center'>";
                                 if ($_SESSION['role'] == 'admin') {
                                     // Tautan mengarah ke file edit_absensi.php baru
@@ -78,7 +95,7 @@ include '../includes/header.php';
                             </tr>";
                             $no++;
                         }
-                    } else { echo "<tr><td colspan='5' class='text-center text-muted'>Tidak ada data absensi yang ditemukan.</td></tr>"; }
+                    } else { echo "<tr><td colspan='7' class='text-center text-muted'>Tidak ada data absensi yang ditemukan.</td></tr>"; } // colspan diubah menjadi 7
                     ?>
                 </tbody>
             </table>
@@ -86,7 +103,7 @@ include '../includes/header.php';
     </div>
     <div class="card-footer bg-white">
         <?php
-        // PERBAIKAN: Integrasi Logika Paginasi yang Lebih Baik
+        // Integrasi Logika Paginasi yang Lebih Baik
         if ($jumlahHalaman > 1) {
             $parameter_lainnya = [];
             if (!empty($cari)) {
@@ -176,9 +193,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <?php 
-// Menutup statement dan koneksi, lalu memuat footer
-if (isset($stmt)) $stmt->close();
-if (isset($stmt_hitung)) $stmt_hitung->close();
-$conn->close();
+$conn->close(); // Menutup koneksi di akhir
 include '../includes/footer.php'; 
 ?>

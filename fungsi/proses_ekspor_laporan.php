@@ -7,7 +7,6 @@ require_once '../auth/auth.php';
 
 // Fitur ini hanya untuk admin
 if ($_SESSION['role'] !== 'admin') {
-    // Admin tidak perlu pesan flash, cukup hentikan eksekusi
     http_response_code(403); // Forbidden
     echo "Akses ditolak.";
     exit;
@@ -45,9 +44,14 @@ if (!empty($where_parts)) {
     $where_clause = ' WHERE ' . implode(' AND ', $where_parts);
 }
 
-// Query untuk mengambil data laporan.
-// Memilih kolom yang relevan untuk ekspor.
-$sql_laporan = "SELECT absensi.id AS id_absensi, users.username, absensi.tanggal, absensi.status 
+// PERBAIKAN: Query untuk mengambil data laporan kini menyertakan semua kolom yang relevan.
+$sql_laporan = "SELECT 
+                    absensi.id AS id_absensi, 
+                    users.username, 
+                    absensi.tanggal, 
+                    absensi.jam_masuk, 
+                    absensi.status, 
+                    absensi.kondisi_masuk
                 FROM absensi 
                 LEFT JOIN users ON absensi.user_id = users.id" 
                . $where_clause . " ORDER BY absensi.tanggal ASC, absensi.id ASC";
@@ -70,7 +74,7 @@ if ($stmt_laporan) {
 // --- Proses Pembuatan dan Pengiriman File CSV ---
 
 // 1. Menentukan nama file dan mengatur Header HTTP untuk download
-$nama_file = "laporan_absensi_" . date('Y-m-d') . ".csv";
+$nama_file = "laporan_absensi_" . date('Y-m-d_H-i-s') . ".csv";
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $nama_file . '"');
 
@@ -78,7 +82,7 @@ header('Content-Disposition: attachment; filename="' . $nama_file . '"');
 $output = fopen('php://output', 'w');
 
 // 3. Menulis baris header untuk file CSV
-fputcsv($output, ['ID Absensi', 'Nama Karyawan', 'Tanggal', 'Status']);
+fputcsv($output, ['ID Absensi', 'Nama Karyawan', 'Tanggal', 'Jam Masuk', 'Status', 'Kondisi']);
 
 // 4. Melakukan loop pada hasil query dan menulis setiap baris data ke file CSV
 if ($result->num_rows > 0) {
