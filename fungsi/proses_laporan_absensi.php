@@ -15,7 +15,7 @@ if ($_SESSION['role'] !== 'admin') {
 
 $page_title = "Laporan Absensi";
 
-// PERBAIKAN: Ambil semua pengguna (admin dan karyawan) dan kelompokkan berdasarkan peran
+// Ambil daftar karyawan untuk dropdown filter
 $users_list = [];
 $users_result = $conn->query("SELECT id, username, role FROM users ORDER BY role ASC, username ASC");
 if ($users_result) {
@@ -29,6 +29,12 @@ $laporan_data = [];
 $stats_laporan = ['Hadir' => 0, 'Izin' => 0, 'Sakit' => 0, 'Alpha' => 0];
 $filter_aktif = false;
 
+// PERBAIKAN: Inisialisasi variabel paginasi
+$halaman = isset($_GET['halaman']) && is_numeric($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
+$jumlahHalaman = 0;
+$total = 0;
+$batas = 15; // Anda bisa sesuaikan jumlah data per halaman di sini
+
 // Variabel untuk menyimpan nilai filter (untuk sticky form)
 $filter_user_id = $_GET['user_id'] ?? '';
 $filter_tanggal_mulai = $_GET['tanggal_mulai'] ?? '';
@@ -39,62 +45,69 @@ if (isset($_GET['tampilkan'])) {
     $filter_aktif = true;
     
     // Bangun query dinamis berdasarkan filter yang diterapkan
-    $where_parts = []; // Array untuk menyimpan bagian dari klausa WHERE
-    $params = [];      // Array untuk menyimpan parameter yang akan di-bind
-    $types = '';       // String untuk menyimpan tipe data parameter
+    $where_parts = [];
+    $params = [];
+    $types = '';
 
-    // Menambahkan filter berdasarkan user_id jika dipilih
     if (!empty($filter_user_id)) {
         $where_parts[] = "absensi.user_id = ?";
         $params[] = $filter_user_id;
         $types .= 'i';
     }
-    // Menambahkan filter berdasarkan tanggal_mulai jika diisi
     if (!empty($filter_tanggal_mulai)) {
         $where_parts[] = "absensi.tanggal >= ?";
         $params[] = $filter_tanggal_mulai;
         $types .= 's';
     }
-    // Menambahkan filter berdasarkan tanggal_selesai jika diisi
     if (!empty($filter_tanggal_selesai)) {
         $where_parts[] = "absensi.tanggal <= ?";
         $params[] = $filter_tanggal_selesai;
         $types .= 's';
     }
 
-    $where_clause = ''; // Inisialisasi klausa WHERE
+    $where_clause = '';
     if (!empty($where_parts)) {
-        // Menggabungkan semua bagian WHERE dengan 'AND'
         $where_clause = ' WHERE ' . implode(' AND ', $where_parts);
     }
 
-    // Query untuk mengambil data detail laporan
-    $sql_laporan = "SELECT absensi.*, users.username 
-                    FROM absensi 
-                    LEFT JOIN users ON absensi.user_id = users.id" 
-                   . $where_clause . " ORDER BY absensi.tanggal DESC, absensi.id DESC";
+    // PERBAIKAN: Langkah 1 - Hitung total data yang cocok dengan filter untuk paginasi
+    $sql_hitung = "SELECT COUNT(absensi.id) AS total FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause;
+    $stmt_hitung = $conn->prepare($sql_hitung);
+    if ($stmt_hitung) {
+        if(!empty($types)) { $stmt_hitung->bind_param($types, ...$params); }
+        $stmt_hitung->execute();
+        $total_result = $stmt_hitung->get_result()->fetch_assoc();
+        $total = $total_result['total'] ?? 0;
+        $jumlahHalaman = ceil($total / $batas);
+        $stmt_hitung->close();
+    }
+
+    // PERBAIKAN: Langkah 2 - Ambil data untuk halaman saat ini dengan LIMIT
+    $mulai = ($halaman > 0) ? (($halaman - 1) * $batas) : 0;
     
+    $sql_laporan = "SELECT absensi.*, users.username FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause . " ORDER BY absensi.tanggal DESC, absensi.id DESC LIMIT ?, ?";
+    
+    // Tambahkan parameter untuk LIMIT ke query
+    $params_for_data_query = $params;
+    $params_for_data_query[] = $mulai;
+    $params_for_data_query[] = $batas;
+    $types_for_data_query = $types . 'ii';
+
     $stmt_laporan = $conn->prepare($sql_laporan);
     if ($stmt_laporan) {
-        if (!empty($params)) {
-            $stmt_laporan->bind_param($types, ...$params);
+        if (!empty($types_for_data_query)) {
+            $stmt_laporan->bind_param($types_for_data_query, ...$params_for_data_query);
         }
         $stmt_laporan->execute();
         $laporan_data = $stmt_laporan->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt_laporan->close();
     }
 
-    // Query untuk mengambil statistik ringkasan
-    $sql_stats = "SELECT status, COUNT(absensi.id) as jumlah 
-                  FROM absensi 
-                  LEFT JOIN users ON absensi.user_id = users.id" 
-                 . $where_clause . " GROUP BY absensi.status";
-    
+    // Query untuk mengambil statistik ringkasan (tanpa limit)
+    $sql_stats = "SELECT status, COUNT(absensi.id) as jumlah FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause . " GROUP BY absensi.status";
     $stmt_stats = $conn->prepare($sql_stats);
     if ($stmt_stats) {
-        if (!empty($params)) {
-            $stmt_stats->bind_param($types, ...$params);
-        }
+        if (!empty($params)) { $stmt_stats->bind_param($types, ...$params); }
         $stmt_stats->execute();
         $result_stats = $stmt_stats->get_result();
         while($row = $result_stats->fetch_assoc()) {
@@ -105,5 +118,4 @@ if (isset($_GET['tampilkan'])) {
         $stmt_stats->close();
     }
 }
-
-// Semua variabel yang dibutuhkan oleh view sudah siap.
+?>

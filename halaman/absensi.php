@@ -12,7 +12,7 @@ include '../includes/header.php';
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="m-0"><i class="bi bi-list-ul"></i> <?php echo htmlspecialchars($page_title); ?></h2>
     <?php if ($_SESSION['role'] == 'admin'): ?>
-        <!-- PERBAIKAN: Mengarah ke file tambah_absensi.php yang baru -->
+        <!-- Mengarah ke file tambah_absensi.php yang baru -->
         <a href="tambah_absensi.php" class="btn btn-primary"><i class="bi bi-plus-circle-fill me-2"></i>Tambah Absensi Manual</a>
     <?php endif; ?>
 </div>
@@ -85,18 +85,55 @@ include '../includes/header.php';
         </div>
     </div>
     <div class="card-footer bg-white">
-        <?php if(isset($jumlahHalaman) && $jumlahHalaman > 1): ?>
-        <nav>
-            <ul class="pagination justify-content-center m-0">
-                <?php for ($i = 1; $i <= $jumlahHalaman; $i++): ?>
-                    <li class="page-item <?= ($i == $halaman) ? 'active' : '' ?>">
-                        <!-- Tautan paginasi mengarah ke halaman ini sendiri -->
-                        <a class="page-link" href="?halaman=<?= $i ?>&cari=<?= urlencode($cari) ?>"><?= $i ?></a>
-                    </li>
-                <?php endfor; ?>
-            </ul>
-        </nav>
-        <?php endif; ?>
+        <?php
+        // PERBAIKAN: Integrasi Logika Paginasi yang Lebih Baik
+        if ($jumlahHalaman > 1) {
+            $parameter_lainnya = [];
+            if (!empty($cari)) {
+                $parameter_lainnya['cari'] = $cari;
+            }
+            $parameter_query = http_build_query($parameter_lainnya);
+            $url_awal = 'absensi.php?' . $parameter_query . '&halaman=';
+
+            echo '<nav aria-label="Navigasi Halaman"><ul class="pagination justify-content-center m-0">';
+
+            // Tombol "Sebelumnya"
+            $disabled_sebelumnya = ($halaman <= 1) ? "disabled" : "";
+            $halaman_sebelumnya = $halaman - 1;
+            echo "<li class='page-item {$disabled_sebelumnya}'><a class='page-link' href='{$url_awal}{$halaman_sebelumnya}'>Sebelumnya</a></li>";
+
+            // Aturan untuk menampilkan nomor halaman
+            $jarak = 2;
+            $mulai_loop = max(1, $halaman - $jarak);
+            $selesai_loop = min($jumlahHalaman, $halaman + $jarak);
+
+            if ($mulai_loop > 1) {
+                echo "<li class='page-item'><a class='page-link' href='{$url_awal}1'>1</a></li>";
+                if ($mulai_loop > 2) {
+                    echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                }
+            }
+
+            for ($i = $mulai_loop; $i <= $selesai_loop; $i++) {
+                $active_class = ($i == $halaman) ? "active" : "";
+                echo "<li class='page-item {$active_class}'><a class='page-link' href='{$url_awal}{$i}'>{$i}</a></li>";
+            }
+
+            if ($selesai_loop < $jumlahHalaman) {
+                if ($selesai_loop < $jumlahHalaman - 1) {
+                    echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                }
+                echo "<li class='page-item'><a class='page-link' href='{$url_awal}{$jumlahHalaman}'>{$jumlahHalaman}</a></li>";
+            }
+
+            // Tombol "Berikutnya"
+            $disabled_berikutnya = ($halaman >= $jumlahHalaman) ? "disabled" : "";
+            $halaman_berikutnya = $halaman + 1;
+            echo "<li class='page-item {$disabled_berikutnya}'><a class='page-link' href='{$url_awal}{$halaman_berikutnya}'>Berikutnya</a></li>";
+
+            echo '</ul></nav>';
+        }
+        ?>
     </div>
 </div>
 
