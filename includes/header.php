@@ -62,6 +62,9 @@ $current_page = basename($_SERVER['SCRIPT_NAME']);
             <a class="nav-link <?php echo ($current_page == 'laporan_absensi.php') ? 'active' : ''; ?>" href="laporan_absensi.php">Laporan</a>
         </li>
         <?php endif; ?>
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'tentang.php') ? 'active' : ''; ?>" href="tentang.php">Tentang</a>
+        </li>
       </ul>
       <ul class="navbar-nav ms-auto">
         <?php if (isset($_SESSION['user_id'])): ?>
