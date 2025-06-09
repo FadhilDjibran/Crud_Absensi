@@ -6,7 +6,7 @@ require_once '../config/config.php';
 require_once '../auth/auth.php'; 
 
 // Menyiapkan variabel untuk halaman tampilan
-$page_title = "Data Absensi (Disetujui)";
+$page_title = "Data Absensi";
 
 // Logika untuk Notifikasi (Flash Message)
 $flash_message_text = '';
