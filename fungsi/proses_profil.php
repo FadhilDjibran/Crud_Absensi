@@ -1,18 +1,14 @@
 <?php
 // File: fungsi/proses_profil.php
-// Berisi semua logika untuk halaman profil pengguna.
 
 require_once '../config/config.php';
 require_once '../auth/auth.php';
 
-// Memastikan pengguna sudah login untuk mengakses logika ini
+// Memastikan pengguna sudah login
 if (!isset($_SESSION['user_id'])) {
-    // Jika tidak ada sesi, tidak ada yang bisa dilakukan.
-    // File tampilan akan mengarahkan ke halaman login.
     exit;
 }
 
-// Menyiapkan variabel untuk halaman tampilan
 $page_title = "Profil Saya";
 $user_id = $_SESSION['user_id'];
 
@@ -22,7 +18,7 @@ $message_type = '';
 $current_username_display = $_SESSION['username']; 
 $current_role_display = $_SESSION['role'];     
 
-// Ambil pesan flash dari sesi (misalnya dari redirect halaman ini sendiri)
+// Ambil Flash Mesaage
 if (isset($_SESSION['flash_message'])) {
     $message = $_SESSION['flash_message'];
     $message_type = $_SESSION['flash_message_type'] ?? 'info';

@@ -1,6 +1,5 @@
 <?php
 // File: fungsi/proses_edit_absensi.php
-// Berisi logika untuk mengambil dan memperbarui data absensi yang sudah disetujui.
 
 require_once '../config/config.php';
 require_once '../auth/auth.php';
@@ -13,7 +12,7 @@ if ($_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Validasi ID dari URL
+// Validasi ID
 if (!isset($_GET['id']) || empty($_GET['id']) || !is_numeric($_GET['id'])) {
     $_SESSION['flash_message'] = "ID data absensi tidak valid.";
     $_SESSION['flash_message_type'] = "warning";
@@ -24,7 +23,7 @@ if (!isset($_GET['id']) || empty($_GET['id']) || !is_numeric($_GET['id'])) {
 $id = (int)$_GET['id'];
 $page_title = "Edit Data Absensi";
 
-// Ambil data absensi saat ini dari database untuk ditampilkan di form
+// Ambil data absensi dari database untuk ditampilkan di form
 $stmt_select = $conn->prepare("SELECT absensi.*, users.username FROM absensi LEFT JOIN users ON absensi.user_id = users.id WHERE absensi.id = ?");
 $stmt_select->bind_param("i", $id);
 $stmt_select->execute();
@@ -39,7 +38,7 @@ if (!$data_absensi) {
     exit();
 }
 
-// Siapkan variabel untuk ditampilkan di view
+// Siapkan variabel
 $nama_karyawan_db = $data_absensi['username'] ?? $data_absensi['nama']; // Fallback ke nama jika username null
 $tanggal_absensi_db = $data_absensi['tanggal'];
 $status_absensi_db = $data_absensi['status'];
@@ -55,11 +54,10 @@ if (isset($_POST['update'])) {
     $hapus_bukti_saat_ini = isset($_POST['hapus_bukti_saat_ini']);
     $file_bukti_baru_info = $_FILES['file_bukti_baru'];
     
-    // Inisialisasi variabel untuk update
     $kondisi_masuk_baru = null;
-    $path_db_untuk_bukti = $bukti_file_db; // Defaultnya pakai path lama
+    $path_db_untuk_bukti = $bukti_file_db; 
 
-    // 1. Logika Hapus File Bukti yang Ada Jika Diminta
+    // 1. Logika Hapus File Bukti
     if ($hapus_bukti_saat_ini && !empty($bukti_file_db)) {
         if (file_exists("../" . $bukti_file_db)) {
             unlink("../" . $bukti_file_db);
@@ -69,7 +67,7 @@ if (isset($_POST['update'])) {
 
     // 2. Logika Upload File Bukti Baru
     if (isset($file_bukti_baru_info) && $file_bukti_baru_info['error'] == UPLOAD_ERR_OK) {
-        // Hapus file lama terlebih dahulu sebelum mengunggah yang baru
+        // Hapus file lama terlebih dahulu 
         if (!empty($path_db_untuk_bukti)) {
              if (file_exists("../" . $path_db_untuk_bukti)) {
                 unlink("../" . $path_db_untuk_bukti);
@@ -105,19 +103,19 @@ if (isset($_POST['update'])) {
         }
     }
 
-    // 3. Menentukan nilai akhir untuk kolom-kolom terkait status
+    // 3. Menentukan nilai akhir 
     if ($status_form == 'Hadir') {
-        // Jika status Hadir, tentukan kondisi masuk. Bukti file di-NULL-kan.
+        // Jika status Hadir, tentukan kondisi masuk dan hapus bukti file
         if (!empty($jam_masuk_form)) {
             $kondisi_masuk_baru = ($jam_masuk_form > JAM_MASUK_KANTOR) ? 'Terlambat' : 'Tepat Waktu';
         }
-        // Jika ada bukti file lama dan status diubah menjadi Hadir, hapus file lama.
+        // Jika ada bukti file dan status diubah menjadi Hadir, hapus file lama.
         if (!empty($path_db_untuk_bukti)) {
             if (file_exists("../" . $path_db_untuk_bukti)) unlink("../" . $path_db_untuk_bukti);
         }
         $path_db_untuk_bukti = null;
     } else {
-        // Jika status bukan Hadir, jam_masuk dan kondisi_masuk di-NULL-kan.
+        // Jika status bukan Hadir, jam_masuk dan kondisi_masuk dihapus
         $jam_masuk_form = null;
         $kondisi_masuk_baru = null;
         // Jika status diubah jadi Alpha dan ada file bukti, hapus filenya.
@@ -145,7 +143,7 @@ if (isset($_POST['update'])) {
     $stmt_update->close();
 }
 
-// Logika untuk Notifikasi Flash Message
+// Logika Flash Message
 $flash_message_text = '';
 $flash_message_type = '';
 if (isset($_SESSION['flash_message'])) {

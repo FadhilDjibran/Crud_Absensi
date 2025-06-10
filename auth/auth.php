@@ -1,7 +1,7 @@
 <?php
 // File: auth/auth.php
 
-// Panggil session_start jika belum aktif (sebagai pengaman)
+// Panggil session_start jika belum aktif 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

@@ -1,8 +1,7 @@
 <?php
 // File: halaman/edit_absensi.php
-// Menampilkan form untuk mengedit data absensi yang sudah disetujui.
 
-// Memuat file proses yang akan menyiapkan semua variabel yang dibutuhkan
+// Memuat file proses
 require_once '../fungsi/proses_edit_absensi.php';
 
 // Memuat header HTML
@@ -50,7 +49,7 @@ include '../includes/header.php';
                         </div>
                     </div>
 
-                    <!-- Input tambahan untuk Jam Masuk dan Bukti File -->
+                    <!-- Input Jam Masuk dan Bukti File -->
                     <div id="input_jam_masuk" class="mb-3">
                         <label for="jam_masuk" class="form-label">Jam Masuk</label>
                         <div class="input-group">
@@ -99,7 +98,7 @@ include '../includes/header.php';
 </div>
 
 <script>
-// JavaScript untuk menampilkan/menyembunyikan input tambahan secara dinamis
+// JavaScript untuk menampilkan input tambahan ketika dipilih
 function toggleInputs() {
     var status = document.getElementById('status').value;
     var divJamMasuk = document.getElementById('input_jam_masuk');
@@ -111,21 +110,20 @@ function toggleInputs() {
     } else if (status === 'Izin' || status === 'Sakit') {
         divJamMasuk.style.display = 'none';
         divBuktiFile.style.display = 'block';
-    } else { // Untuk Alpha atau status lain
+    } else { 
         divJamMasuk.style.display = 'none';
         divBuktiFile.style.display = 'none';
     }
 }
 
-// Panggil fungsi saat halaman dimuat untuk mengatur tampilan awal
+// Panggil fungsi saat halaman dimuat
 document.addEventListener('DOMContentLoaded', toggleInputs);
 
 // Panggil fungsi setiap kali status diubah
 document.getElementById('status').addEventListener('change', toggleInputs);
 </script>
 
-
 <?php 
-$conn->close(); 
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php';
 ?>

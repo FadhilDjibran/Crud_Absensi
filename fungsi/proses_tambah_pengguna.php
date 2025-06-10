@@ -1,11 +1,10 @@
 <?php
 // File: fungsi/proses_tambah_pengguna.php
-// Berisi logika untuk menambah pengguna baru oleh admin.
 
 require_once '../config/config.php'; 
 require_once '../auth/auth.php'; 
 
-// Cek otentikasi dan otorisasi (hanya admin)
+// Hanya admin yang dapat mengakses
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['flash_message'] = "Anda tidak memiliki hak akses untuk halaman ini.";
     $_SESSION['flash_message_type'] = "danger";
@@ -13,15 +12,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-// Menyiapkan variabel untuk view
 $page_title = "Tambah Pengguna Baru"; 
 $form_username = '';
 $form_role = '';
 $message = '';
 $message_type = '';
 
-// Ambil flash message dari session jika ada (misal setelah redirect dari halaman lain)
-// Kondisi !isset($_POST['add_user_submit']) mencegah pesan terhapus jika ada error validasi di halaman yang sama.
+// Ambil flash message dari session jika ada 
 if (isset($_SESSION['flash_message']) && !isset($_POST['add_user_submit'])) {
     $message = $_SESSION['flash_message'];
     $message_type = $_SESSION['flash_message_type'] ?? 'info';
@@ -63,7 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user_submit'])) {
             if ($stmt_insert->execute()) {
                 $_SESSION['flash_message'] = "Pengguna '" . htmlspecialchars($form_username) . "' berhasil ditambahkan.";
                 $_SESSION['flash_message_type'] = 'success';
-                // Arahkan ke halaman manajemen pengguna setelah sukses
                 header("Location: ../halaman/manajemen_pengguna.php"); 
                 exit;
             } else {
@@ -75,4 +71,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user_submit'])) {
         $stmt_check->close();
     }
 }
-// Variabel yang telah disiapkan di sini akan tersedia untuk file tampilan.

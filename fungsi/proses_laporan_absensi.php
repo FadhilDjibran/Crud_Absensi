@@ -1,7 +1,5 @@
 <?php
 // File: fungsi/proses_laporan_absensi.php
-// Berisi logika untuk memfilter dan menyiapkan data laporan.
-
 require_once '../config/config.php';
 require_once '../auth/auth.php';
 
@@ -15,7 +13,7 @@ if ($_SESSION['role'] !== 'admin') {
 
 $page_title = "Laporan Absensi";
 
-// Ambil daftar karyawan untuk dropdown filter
+// Ambil daftar karyawan untuk dropdown
 $users_list = [];
 $users_result = $conn->query("SELECT id, username, role FROM users ORDER BY role ASC, username ASC");
 if ($users_result) {
@@ -29,13 +27,13 @@ $laporan_data = [];
 $stats_laporan = ['Hadir' => 0, 'Izin' => 0, 'Sakit' => 0, 'Alpha' => 0];
 $filter_aktif = false;
 
-// PERBAIKAN: Inisialisasi variabel paginasi
+// Inisialisasi variabel paginasi
 $halaman = isset($_GET['halaman']) && is_numeric($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
 $jumlahHalaman = 0;
 $total = 0;
-$batas = 15; // Anda bisa sesuaikan jumlah data per halaman di sini
+$batas = 15; // Batas data per halaman
 
-// Variabel untuk menyimpan nilai filter (untuk sticky form)
+// Menyimpan nilai filter untuk sticky form
 $filter_user_id = $_GET['user_id'] ?? '';
 $filter_tanggal_mulai = $_GET['tanggal_mulai'] ?? '';
 $filter_tanggal_selesai = $_GET['tanggal_selesai'] ?? '';
@@ -44,10 +42,10 @@ $filter_tanggal_selesai = $_GET['tanggal_selesai'] ?? '';
 if (isset($_GET['tampilkan'])) {
     $filter_aktif = true;
     
-    // Bangun query dinamis berdasarkan filter yang diterapkan
-    $where_parts = []; // Array untuk menyimpan bagian dari klausa WHERE
-    $params = [];      // Array untuk menyimpan parameter yang akan di-bind
-    $types = '';       // String untuk menyimpan tipe data parameter
+    // Membangun query berdasarkan filter
+    $where_parts = []; 
+    $params = [];      
+    $types = '';       
 
     if (!empty($filter_user_id)) {
         $where_parts[] = "absensi.user_id = ?";
@@ -65,13 +63,12 @@ if (isset($_GET['tampilkan'])) {
         $types .= 's';
     }
 
-    $where_clause = ''; // Inisialisasi klausa WHERE
+    $where_clause = ''; 
     if (!empty($where_parts)) {
-        // Menggabungkan semua bagian WHERE dengan 'AND'
         $where_clause = ' WHERE ' . implode(' AND ', $where_parts);
     }
 
-    // PERBAIKAN: Langkah 1 - Hitung total data yang cocok dengan filter untuk paginasi
+    // Langkah 1 - Hitung total data yang cocok dengan filter untuk paginasi
     $sql_hitung = "SELECT COUNT(absensi.id) AS total FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause;
     $stmt_hitung = $conn->prepare($sql_hitung);
     if ($stmt_hitung) {
@@ -83,10 +80,9 @@ if (isset($_GET['tampilkan'])) {
         $stmt_hitung->close();
     }
 
-    // PERBAIKAN: Langkah 2 - Ambil data untuk halaman saat ini dengan LIMIT
+    // Langkah 2 - Ambil data untuk halaman saat ini dengan LIMIT
     $mulai = ($halaman > 0) ? (($halaman - 1) * $batas) : 0;
     
-    // PERBAIKAN: Query laporan sekarang mengambil juga jam_masuk dan kondisi_masuk
     $sql_laporan = "SELECT absensi.id, absensi.nama, absensi.tanggal, absensi.jam_masuk, absensi.status, absensi.kondisi_masuk, users.username 
                     FROM absensi 
                     LEFT JOIN users ON absensi.user_id = users.id" 
@@ -108,7 +104,7 @@ if (isset($_GET['tampilkan'])) {
         $stmt_laporan->close();
     }
 
-    // Query untuk mengambil statistik ringkasan (tanpa limit)
+    // Query untuk mengambil statistik ringkasan
     $sql_stats = "SELECT status, COUNT(absensi.id) as jumlah FROM absensi LEFT JOIN users ON absensi.user_id = users.id" . $where_clause . " GROUP BY absensi.status";
     $stmt_stats = $conn->prepare($sql_stats);
     if ($stmt_stats) {

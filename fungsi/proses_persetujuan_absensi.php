@@ -1,33 +1,30 @@
 <?php
 // File: fungsi/proses_persetujuan_absensi.php
-// Skrip ini menangani logika backend untuk menyetujui atau menolak pengajuan absensi.
 
-require_once '../config/config.php'; // Memuat konfigurasi dan memulai session
-require_once '../auth/auth.php';     // Memastikan hanya pengguna yang terautentikasi
+require_once '../config/config.php'; 
+require_once '../auth/auth.php';     
 
-// Memastikan hanya admin yang bisa mengakses skrip ini
+// Hanya admin yang bisa mengakses
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['flash_message'] = "Anda tidak memiliki hak akses untuk tindakan ini.";
     $_SESSION['flash_message_type'] = "danger";
-    // Mengarahkan ke halaman login jika sesi tidak valid
     header("Location: ../auth/login.php"); 
     exit;
 }
 
-// Memastikan parameter ID pengajuan dan aksi ada di URL
+// Memastikan ID pengajuan ada
 if (!isset($_GET['id']) || !is_numeric($_GET['id']) || !isset($_GET['aksi'])) {
     $_SESSION['flash_message'] = "Parameter tidak valid untuk memproses pengajuan.";
     $_SESSION['flash_message_type'] = "danger";
-    // Mengarahkan kembali ke dasbor jika parameter tidak lengkap
     header("Location: ../halaman/dasbor.php");
     exit;
 }
 
 $pengajuan_id = (int)$_GET['id'];
 $aksi = $_GET['aksi']; // 'setujui' atau 'tolak'
-$admin_user_id = $_SESSION['user_id']; // ID admin yang melakukan review (opsional jika ingin dicatat)
+$admin_user_id = $_SESSION['user_id']; // ID admin yang melakukan review
 
-// Mengambil detail pengajuan dari database untuk diproses
+// Mengambil detail pengajuan dari database
 $stmt_get_pengajuan = $conn->prepare("SELECT user_id, nama, tanggal, status_diajukan, status_review, bukti_file, jam_masuk, kondisi_masuk FROM pengajuanAbsensi WHERE id = ?");
 if (!$stmt_get_pengajuan) {
     $_SESSION['flash_message'] = "Gagal mempersiapkan query untuk mengambil data pengajuan: " . $conn->error;
@@ -57,10 +54,10 @@ if ($pengajuan['status_review'] !== 'pending') {
     exit;
 }
 
-// Memulai transaksi database untuk menjaga konsistensi data
 $conn->begin_transaction();
 
 try {
+    // Jika setujui
     if ($aksi === 'setujui') {
         // 1. Update status_review di tabel pengajuanAbsensi menjadi 'disetujui'
         $stmt_update_pengajuan = $conn->prepare("UPDATE pengajuanAbsensi SET status_review = 'disetujui' WHERE id = ?");
@@ -70,7 +67,7 @@ try {
         if (!$stmt_update_pengajuan->execute()) throw new Exception("Gagal mengupdate status pengajuan: " . $stmt_update_pengajuan->error);
         $stmt_update_pengajuan->close();
 
-        // 2. Masukkan data ke tabel absensi (data final)
+        // 2. Masukkan data ke tabel absensi 
         $stmt_insert_absensi = $conn->prepare(
             "INSERT INTO absensi (user_id, nama, tanggal, jam_masuk, status, kondisi_masuk, bukti_file) VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
@@ -93,6 +90,7 @@ try {
         $_SESSION['flash_message'] = "Pengajuan absensi untuk " . htmlspecialchars($pengajuan['nama']) . " (" . htmlspecialchars($pengajuan['status_diajukan']) . ") berhasil disetujui.";
         $_SESSION['flash_message_type'] = "success";
 
+    // Jika tolak
     } elseif ($aksi === 'tolak') {
         // 1. Update status_review di tabel pengajuanAbsensi menjadi 'ditolak'
         $stmt_update_pengajuan = $conn->prepare("UPDATE pengajuanAbsensi SET status_review = 'ditolak' WHERE id = ?");
@@ -106,11 +104,9 @@ try {
         $_SESSION['flash_message_type'] = "warning";
 
     } else {
-        // Jika parameter 'aksi' tidak dikenal
         throw new Exception("Aksi tidak dikenal.");
     }
 
-    // Jika semua query berhasil, commit transaksi
     $conn->commit();
 
 } catch (Exception $e) {
@@ -120,7 +116,7 @@ try {
     $_SESSION['flash_message_type'] = "danger";
 }
 
-$conn->close(); // Menutup koneksi database
-header("Location: ../halaman/dasbor.php"); // Mengarahkan kembali ke dasbor admin dengan nama file baru
+$conn->close(); // Menutup koneksi
+header("Location: ../halaman/dasbor.php"); 
 exit;
 ?>

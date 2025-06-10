@@ -1,11 +1,10 @@
 <?php
 // File: fungsi/proses_pengajuan_hadir.php
-// Skrip ini menangani logika backend saat karyawan melakukan "Clock In".
 
-require_once '../config/config.php'; // Memuat konfigurasi dan memulai session
-require_once '../auth/auth.php';     // Memastikan hanya pengguna yang terautentikasi
+require_once '../config/config.php'; 
+require_once '../auth/auth.php';  
 
-// Pastikan pengguna adalah karyawan (bukan admin)
+// Pastikan pengguna adalah karyawan 
 if ($_SESSION['role'] === 'admin') {
     $_SESSION['flash_message'] = "Admin tidak dapat melakukan clock-in melalui fitur ini.";
     $_SESSION['flash_message_type'] = "warning";
@@ -14,11 +13,11 @@ if ($_SESSION['role'] === 'admin') {
 }
 
 $current_user_id = $_SESSION['user_id'];
-$current_username = $_SESSION['username']; // Nama karyawan dari session
+$current_username = $_SESSION['username']; 
 $tanggal_hari_ini = date('Y-m-d');
-$status_diajukan = 'Hadir'; // Status yang diajukan adalah "Hadir"
+$status_diajukan = 'Hadir'; 
 
-// --- Pengecekan Duplikasi ---
+// Pengecekan Duplikasi
 // 1. Cek apakah karyawan sudah memiliki pengajuan 'pending' untuk hari ini
 $stmt_check_pengajuan = $conn->prepare(
     "SELECT id FROM pengajuanAbsensi WHERE user_id = ? AND tanggal = ? AND status_review = 'pending'"
@@ -40,7 +39,7 @@ if ($stmt_check_pengajuan->get_result()->num_rows > 0) {
 }
 $stmt_check_pengajuan->close();
 
-// 2. Cek apakah karyawan sudah memiliki absensi final (disetujui) di tabel absensi untuk hari ini
+// 2. Cek apakah karyawan sudah memiliki absensi yang sudah disetujui di tabel absensi untuk hari ini
 $stmt_check_absensi = $conn->prepare(
     "SELECT id FROM absensi WHERE user_id = ? AND tanggal = ?"
 );
@@ -62,13 +61,12 @@ if ($stmt_check_absensi->get_result()->num_rows > 0) {
 $stmt_check_absensi->close();
 
 
-// --- Proses Pengajuan ---
-// PERUBAHAN: Tangkap jam sekarang dan tentukan kondisinya
+// Proses Pengajuan
+// Tangkap jam sekarang dan tentukan kondisinya
 $jam_sekarang = date('H:i:s');
 $kondisi_masuk = ($jam_sekarang > JAM_MASUK_KANTOR) ? 'Terlambat' : 'Tepat Waktu';
 
 // Jika lolos semua pengecekan, buat pengajuan absensi baru
-// PERUBAHAN: Query INSERT sekarang menyertakan jam_masuk dan kondisi_masuk
 $stmt_insert_pengajuan = $conn->prepare(
     "INSERT INTO pengajuanAbsensi (user_id, nama, tanggal, jam_masuk, status_diajukan, kondisi_masuk, status_review, bukti_file) 
      VALUES (?, ?, ?, ?, ?, ?, 'pending', NULL)"
@@ -82,11 +80,9 @@ if (!$stmt_insert_pengajuan) {
     exit;
 }
 
-// PERBAIKAN: bind_param disesuaikan menjadi "isssss" untuk (id, nama, tanggal, jam, status, kondisi)
 $stmt_insert_pengajuan->bind_param("isssss", $current_user_id, $current_username, $tanggal_hari_ini, $jam_sekarang, $status_diajukan, $kondisi_masuk);
 
 if ($stmt_insert_pengajuan->execute()) {
-    // PERBAIKAN: Pesan sukses sekarang menyertakan kondisi masuk
     $_SESSION['flash_message'] = "Clock-in berhasil diajukan (" . htmlspecialchars($kondisi_masuk) . "). Pengajuan Anda sedang menunggu review admin.";
     $_SESSION['flash_message_type'] = "success";
 } else {
@@ -95,7 +91,7 @@ if ($stmt_insert_pengajuan->execute()) {
     $_SESSION['flash_message_type'] = "danger";
 }
 $stmt_insert_pengajuan->close();
-$conn->close();
+$conn->close(); // Tutup koneksi
 
 header("Location: ../halaman/dasbor.php");
 exit;

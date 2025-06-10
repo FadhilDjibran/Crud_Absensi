@@ -1,6 +1,5 @@
 <?php
 // File: fungsi/proses_edit_pengguna.php
-// Berisi logika untuk mengambil dan memperbarui data pengguna oleh admin.
 
 require_once '../config/config.php';
 require_once '../auth/auth.php';
@@ -13,7 +12,7 @@ if ($_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Inisialisasi variabel untuk view
+// Inisialisasi variabel
 $page_title = "Edit Pengguna";
 $user_id_to_edit = null;
 $form_username = ''; 
@@ -33,7 +32,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     exit;
 }
 
-// Ambil data pengguna saat ini dari database untuk pre-fill form
+// Ambil data pengguna saat ini dari database
 $stmt_fetch_user = $conn->prepare("SELECT username, role FROM users WHERE id = ?");
 $stmt_fetch_user->bind_param("i", $user_id_to_edit);
 $stmt_fetch_user->execute();
@@ -52,13 +51,13 @@ if ($user_to_edit = $result_fetch_user->fetch_assoc()) {
 }
 $stmt_fetch_user->close();
 
-// Proses Update Data jika form disubmit
+// Proses Update Data
 if (isset($_POST['update_user_submit'])) {
     $new_username = trim($_POST['username']);
     $new_password = $_POST['password']; 
     $new_role = $_POST['role'];
 
-    // Update nilai form untuk sticky form jika terjadi error
+    // Update nilai form untuk sticky form
     $form_username = $new_username;
     $form_role = $new_role;
 
@@ -113,14 +112,19 @@ if (isset($_POST['update_user_submit'])) {
             $params_values[] = $new_role;
         }
 
-        // Lakukan update ke database jika ada perubahan dan tidak ada error
+        // Lakukan update ke database jika ada perubahan
         if (!empty($update_clauses) && empty($message)) {
             $params_values[] = $user_id_to_edit;
             $params_types .= "i";
 
             $sql_update = "UPDATE users SET " . implode(", ", $update_clauses) . " WHERE id = ?";
             $stmt_update = $conn->prepare($sql_update);
-            $stmt_update->bind_param($params_types, ...$params_values);
+
+            $bind_args = [$params_types];
+            foreach ($params_values as $key => $value) {
+                $bind_args[] = &$params_values[$key];
+            }
+            call_user_func_array([$stmt_update, 'bind_param'], $bind_args);
 
             if ($stmt_update->execute()) {
                 // Update session jika admin mengedit data mereka sendiri
@@ -144,18 +148,17 @@ if (isset($_POST['update_user_submit'])) {
             }
             $stmt_update->close();
         } elseif (empty($update_clauses) && empty($message)) {
+            // Jika form disubmit tapi tidak ada perubahan
             $message = "Tidak ada perubahan data yang dilakukan.";
             $message_type = 'info';
         }
     }
 }
 
-// Mengambil pesan flash jika ada (misal dari redirect sebelumnya)
+// Mengambil pesan flash jika ada
 if (isset($_SESSION['flash_message'])) {
     $message = $_SESSION['flash_message'];
     $message_type = $_SESSION['flash_message_type'] ?? 'info';
     unset($_SESSION['flash_message']);
     unset($_SESSION['flash_message_type']);
 }
-
-// Variabel yang sudah disiapkan akan digunakan oleh file tampilan.

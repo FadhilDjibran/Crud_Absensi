@@ -1,11 +1,10 @@
 <?php
 // File: fungsi/proses_hapus_pengguna.php
-// Skrip ini menangani logika untuk menghapus pengguna (karyawan).
 
 require_once '../config/config.php';
-require_once '../auth/auth.php'; // Pastikan sesi dimulai dan pengguna terotentikasi
+require_once '../auth/auth.php'; 
 
-// Hanya admin yang bisa mengakses skrip ini
+// Hanya admin yang bisa mengakses
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['flash_message'] = "Anda tidak memiliki hak akses untuk tindakan ini.";
     $_SESSION['flash_message_type'] = "danger";
@@ -13,7 +12,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-// Validasi ID pengguna dari parameter GET
+// Validasi ID pengguna
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     $_SESSION['flash_message'] = "ID pengguna tidak valid atau tidak disediakan.";
     $_SESSION['flash_message_type'] = "danger";

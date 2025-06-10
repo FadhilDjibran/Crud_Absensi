@@ -1,32 +1,29 @@
 <?php
 // File: halaman/tentang.php
-// Menampilkan halaman statis "Tentang Kami".
 
 require_once '../config/config.php';
-require_once '../auth/auth.php'; // Memastikan hanya pengguna yang login yang bisa lihat
+require_once '../auth/auth.php'; 
 
-$page_title = "Tentang Kami"; // Judul untuk tab browser
+$page_title = "Tentang Kami";
 
-// Memuat header HTML
+// Memuat header
 include '../includes/header.php';
 ?>
 
 <div class="container mt-4">
-    <!-- Judul dan Deskripsi Utama -->
     <div class="text-center mb-5">
-        <h2 class="display-5"><i class="bi bi-info-circle-fill"></i> Tentang Aplikasi Ini</h2>
-        <p class="lead text-muted">Website ini dikerjakan oleh <strong>Kelompok 4</strong> Pemrograman Web D081 UPN Veteran Jawa Timur.</p>
+        <h2><i class="bi bi-info-circle-fill"></i> Tentang Aplikasi Ini</h2>
+        <h5 class="text-muted">Website ini dikerjakan oleh <strong>Kelompok 4</strong> Pemrograman Web D081 UPN Veteran Jawa Timur.</h5>
         <hr class="w-50 mx-auto">
     </div>
 
-    <!-- Bagian Profil Anggota Kelompok -->
+    <!-- Profil Anggota Kelompok -->
     <h3 class="text-center mb-4">Tim Kami</h3>
     <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4 justify-content-center">
         
-        <!-- Kartu Profil 2 -->
+        <!-- Kartu Profil 1 -->
          <div class="col">
             <div class="card h-100 text-center shadow-sm">
-                <!-- PERBAIKAN: Path ke gambar lokal -->
                 <img src="../assets/img/Fadhil.jpg" class="card-img-top" alt="Foto Fadhil Djibran">
                 <div class="card-body">
                     <h5 class="card-title">Fadhil Djibran</h5>

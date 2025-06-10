@@ -1,6 +1,5 @@
 <?php
 // File: halaman/profil.php
-// Menampilkan halaman profil pengguna.
 
 // Memuat file proses yang akan menyiapkan semua variabel
 require_once '../fungsi/proses_profil.php';
@@ -68,7 +67,6 @@ include '../includes/header.php';
 </div>
 
 <?php
-// Menutup koneksi database dan memuat footer
-$conn->close();
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php';
 ?>

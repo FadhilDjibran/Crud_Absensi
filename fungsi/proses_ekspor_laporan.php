@@ -1,6 +1,5 @@
 <?php
 // File: fungsi/proses_ekspor_laporan.php
-// Skrip ini bertanggung jawab untuk menghasilkan dan mengunduh laporan absensi dalam format CSV.
 
 require_once '../config/config.php';
 require_once '../auth/auth.php';
@@ -12,13 +11,13 @@ if ($_SESSION['role'] !== 'admin') {
     exit;
 }
 
-// Logika ini adalah salinan dari proses_laporan_absensi.php untuk memastikan
+// Logika ini menyalin dari proses_laporan_absensi.php untuk memastikan
 // data yang diekspor konsisten dengan apa yang ditampilkan di halaman laporan.
 $user_id = $_GET['user_id'] ?? '';
 $tanggal_mulai = $_GET['tanggal_mulai'] ?? '';
 $tanggal_selesai = $_GET['tanggal_selesai'] ?? '';
 
-// Membangun query dinamis berdasarkan filter
+// Membangun query berdasarkan filter
 $where_parts = [];
 $params = [];
 $types = '';
@@ -44,7 +43,6 @@ if (!empty($where_parts)) {
     $where_clause = ' WHERE ' . implode(' AND ', $where_parts);
 }
 
-// PERBAIKAN: Query untuk mengambil data laporan kini menyertakan semua kolom yang relevan.
 $sql_laporan = "SELECT 
                     absensi.id AS id_absensi, 
                     users.username, 
@@ -64,21 +62,21 @@ if ($stmt_laporan) {
     $stmt_laporan->execute();
     $result = $stmt_laporan->get_result();
 } else {
-    // Jika query gagal, hentikan eksekusi
-    http_response_code(500); // Internal Server Error
+    // Jika query gagal, hentikan
+    http_response_code(500); 
     echo "Gagal mempersiapkan query laporan.";
     exit;
 }
 
 
-// --- Proses Pembuatan dan Pengiriman File CSV ---
+// Pembuatan File CSV
 
-// 1. Menentukan nama file dan mengatur Header HTTP untuk download
+// 1. Menentukan nama file dan Header HTTP untuk download
 $nama_file = "laporan_absensi_" . date('Y-m-d_H-i-s') . ".csv";
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $nama_file . '"');
 
-// 2. Membuka 'output stream' PHP untuk menulis file CSV
+// 2. Membuka output stream PHP untuk menulis file CSV
 $output = fopen('php://output', 'w');
 
 // 3. Menulis baris header untuk file CSV

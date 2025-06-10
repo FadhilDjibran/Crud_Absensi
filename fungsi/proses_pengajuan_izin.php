@@ -1,13 +1,10 @@
 <?php
 // File: fungsi/logika_pengajuan_izin.php
-// Berisi semua logika backend untuk halaman pengajuan izin atau sakit.
 
-require_once '../config/config.php'; // Memuat konfigurasi dan memulai session
-require_once '../auth/auth.php';     // Memastikan hanya pengguna yang terautentikasi
+require_once '../config/config.php'; 
+require_once '../auth/auth.php';     
 
-$page_title = "Form Pengajuan Izin/Sakit";
-
-// Hanya karyawan yang bisa mengakses halaman ini
+// Hanya karyawan yang bisa mengakses 
 if ($_SESSION['role'] === 'admin') {
     $_SESSION['flash_message'] = "Admin tidak dapat mengajukan izin/sakit melalui form ini.";
     $_SESSION['flash_message_type'] = "warning";
@@ -15,13 +12,14 @@ if ($_SESSION['role'] === 'admin') {
     exit;
 }
 
+$page_title = "Form Pengajuan Izin/Sakit";
 $current_user_id = $_SESSION['user_id'];
 $current_username = $_SESSION['username'];
 $tanggal_hari_ini = date('Y-m-d');
 
-// Cek apakah karyawan sudah memiliki pengajuan (pending) atau absensi final untuk hari ini
+// Cek apakah karyawan sudah memiliki pengajuan atau absensi untuk hari ini
 $sudah_ada_absensi_atau_pengajuan = false;
-// Cek pengajuan pending
+// Cek pengajuan 
 $stmt_check_pending = $conn->prepare("SELECT id FROM pengajuanAbsensi WHERE user_id = ? AND tanggal = ? AND status_review = 'pending'");
 $stmt_check_pending->bind_param("is", $current_user_id, $tanggal_hari_ini);
 $stmt_check_pending->execute();
@@ -32,7 +30,7 @@ if ($stmt_check_pending->get_result()->num_rows > 0) {
 }
 $stmt_check_pending->close();
 
-// Jika tidak ada pengajuan pending, cek absensi final (disetujui)
+// Jika tidak ada pengajuan pending, cek absensi 
 if (!$sudah_ada_absensi_atau_pengajuan) {
     $stmt_check_approved = $conn->prepare("SELECT id FROM absensi WHERE user_id = ? AND tanggal = ?");
     $stmt_check_approved->bind_param("is", $current_user_id, $tanggal_hari_ini);
@@ -45,18 +43,17 @@ if (!$sudah_ada_absensi_atau_pengajuan) {
     $stmt_check_approved->close();
 }
 
-// Redirect ke dasbor jika sudah ada entri dan ini bukan hasil dari submit form yang error
+// Redirect ke dasbor jika sudah ada entri
 if ($sudah_ada_absensi_atau_pengajuan && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: ../halaman/dasbor.php");
     exit;
 }
 
-// Inisialisasi variabel untuk pesan flash dan sticky form
 $flash_message_text = '';
 $flash_message_type = '';
 $form_status_diajukan = $_POST['status_diajukan'] ?? '';
 
-// Tampilkan flash message dari halaman lain (jika ada)
+// Tampilkan flash message jika ada
 if (isset($_SESSION['flash_message']) && !isset($_POST['ajukan_submit'])) {
     $flash_message_text = $_SESSION['flash_message'];
     $flash_message_type = $_SESSION['flash_message_type'] ?? 'info';
@@ -103,9 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_submit'])) {
             $destination_path = $upload_dir . $unique_filename;
 
             if (move_uploaded_file($bukti_file_info['tmp_name'], $destination_path)) {
-                $path_bukti_file = "uploads/bukti_absensi/" . $unique_filename; // Path relatif dari root proyek
+                $path_bukti_file = "uploads/bukti_absensi/" . $unique_filename; 
 
-                // Simpan ke database pengajuanAbsensi
+                // Simpan ke tabel pengajuanAbsensi
                 $stmt_insert = $conn->prepare(
                     "INSERT INTO pengajuanAbsensi (user_id, nama, tanggal, status_diajukan, bukti_file, status_review) 
                      VALUES (?, ?, ?, ?, ?, 'pending')"
@@ -115,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_submit'])) {
                     if ($stmt_insert->execute()) {
                         $_SESSION['flash_message'] = "Pengajuan absensi (" . htmlspecialchars($status_diajukan) . ") Anda untuk hari ini telah berhasil dikirim dan menunggu review.";
                         $_SESSION['flash_message_type'] = "success";
-                        header("Location: ../halaman/dasbor.php"); // Redirect ke dasbor baru
+                        header("Location: ../halaman/dasbor.php"); 
                         exit;
                     } else {
                         $flash_message_text = "Gagal menyimpan pengajuan absensi ke database: " . htmlspecialchars($stmt_insert->error);
@@ -137,4 +134,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_submit'])) {
         }
     }
 }
-// Variabel yang sudah disiapkan di sini akan tersedia untuk file tampilan.
+

@@ -1,6 +1,5 @@
 <?php
 // File: fungsi/proses_tambah_absensi.php
-// Berisi logika untuk halaman tambah absensi manual oleh admin.
 
 require_once '../config/config.php'; 
 require_once '../auth/auth.php'; 
@@ -15,7 +14,7 @@ if ($_SESSION['role'] !== 'admin') {
 
 $page_title = "Tambah Absensi Manual"; 
 
-// PERBAIKAN: Ambil semua pengguna (admin dan karyawan) untuk dropdown
+// Ambil semua pengguna untuk dropdown
 $users_list = [];
 $users_result = $conn->query("SELECT id, username, role FROM users ORDER BY role ASC, username ASC");
 if ($users_result) {
@@ -25,7 +24,6 @@ if ($users_result) {
     }
 }
 
-// Inisialisasi variabel pesan
 $flash_message_text = '';
 $flash_message_type = '';
 
@@ -37,7 +35,6 @@ if (isset($_POST['tambah'])) {
     $jam_masuk = !empty($_POST['jam_masuk']) ? $_POST['jam_masuk'] : null;
     $bukti_file_info = $_FILES['bukti_file'];
     
-    // Inisialisasi variabel untuk disimpan ke DB
     $kondisi_masuk = null;
     $path_bukti_file = null;
     
@@ -68,7 +65,7 @@ if (isset($_POST['tambah'])) {
         }
     }
 
-    if (empty($flash_message_text)) { // Lanjutkan jika tidak ada error upload
+    if (empty($flash_message_text)) { 
         $stmt_insert = $conn->prepare(
             "INSERT INTO absensi (user_id, nama, tanggal, jam_masuk, status, kondisi_masuk, bukti_file) 
              VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -88,7 +85,7 @@ if (isset($_POST['tambah'])) {
     }
 }
 
-// Tangani flash message dari redirect lain (jika ada)
+// Logika Penanganan Flash Message
 if (isset($_SESSION['flash_message']) && !isset($_POST['tambah'])) {
     $flash_message_text = $_SESSION['flash_message'];
     $flash_message_type = $_SESSION['flash_message_type'] ?? 'info';
@@ -96,4 +93,4 @@ if (isset($_SESSION['flash_message']) && !isset($_POST['tambah'])) {
     unset($_SESSION['flash_message_type']);
 }
 
-// Variabel yang sudah disiapkan di sini akan tersedia untuk file tampilan.
+

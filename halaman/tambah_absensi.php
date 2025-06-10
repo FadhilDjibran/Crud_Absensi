@@ -1,8 +1,7 @@
 <?php
 // File: halaman/tambah_absensi.php
-// Menampilkan form untuk menambah absensi secara manual oleh admin.
 
-// Memuat file proses yang akan menyiapkan semua variabel
+// Memuat file proses 
 require_once '../fungsi/proses_tambah_absensi.php';
 
 // Memuat header HTML
@@ -33,7 +32,7 @@ include '../includes/header.php';
                             <select class="form-select" id="user_id" name="user_id" required>
                                 <option value="" disabled selected>Pilih Pengguna...</option>
                                 
-                                <!-- PERBAIKAN: Dropdown dikelompokkan berdasarkan peran -->
+                                <!-- Dropdown dikelompokkan berdasarkan peran -->
                                 <?php if (!empty($users_list['admin'])): ?>
                                 <optgroup label="Admin">
                                     <?php foreach ($users_list['admin'] as $user): ?>
@@ -78,7 +77,7 @@ include '../includes/header.php';
                         </div>
                     </div>
 
-                    <!-- PERBAIKAN: Input tambahan untuk Jam Masuk dan Bukti File -->
+                    <!-- Input Jam Masuk dan Bukti File -->
                     <div id="input_jam_masuk" class="mb-3" style="display: none;">
                         <label for="jam_masuk" class="form-label">Jam Masuk</label>
                         <div class="input-group">
@@ -106,7 +105,7 @@ include '../includes/header.php';
 </div>
 
 <script>
-// JavaScript untuk menampilkan/menyembunyikan input tambahan secara dinamis
+// JavaScript untuk menampilkan input tambahan ketika dipilih
 document.getElementById('status').addEventListener('change', function() {
     var status = this.value;
     var divJamMasuk = document.getElementById('input_jam_masuk');
@@ -126,6 +125,6 @@ document.getElementById('status').addEventListener('change', function() {
 </script>
 
 <?php 
-$conn->close();
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php'; 
 ?>

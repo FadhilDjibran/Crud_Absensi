@@ -1,8 +1,7 @@
 <?php
 // File: halaman/ajukan_izin.php
-// File ini hanya bertanggung jawab untuk menampilkan halaman form pengajuan.
 
-// Memuat file logika yang akan menyiapkan semua variabel yang dibutuhkan
+// Memuat file proses
 require_once '../fungsi/proses_pengajuan_izin.php';
 
 // Memuat header HTML
@@ -25,8 +24,7 @@ include '../includes/header.php';
             <?php endif; ?>
             
             <?php 
-            // Tampilkan form jika belum ada pengajuan/absensi ATAU jika ini adalah hasil POST dengan error.
-            // Variabel $sudah_ada_absensi_atau_pengajuan disiapkan oleh file logika.
+            // Tampilkan form jika belum ada pengajuan
             if (!$sudah_ada_absensi_atau_pengajuan || $_SERVER['REQUEST_METHOD'] === 'POST'): 
             ?>
             <div class="card shadow-sm">
@@ -57,13 +55,12 @@ include '../includes/header.php';
                     </form>
                 </div>
             </div>
-            <?php endif; // Akhir dari if tampilkan form ?>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
 <?php 
-// Menutup koneksi database dan memuat footer
-$conn->close();
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php'; 
 ?>

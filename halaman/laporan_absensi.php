@@ -1,8 +1,7 @@
 <?php
 // File: halaman/laporan_absensi.php
-// File ini bertanggung jawab untuk menampilkan halaman laporan absensi.
 
-// Memuat file proses yang akan menyiapkan semua variabel yang dibutuhkan
+// Memuat file proses
 require_once '../fungsi/proses_laporan_absensi.php';
 
 // Memuat header HTML
@@ -63,7 +62,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Bagian untuk menampilkan hasil laporan jika filter aktif -->
+<!-- Menampilkan hasil laporan -->
 <?php if ($filter_aktif): ?>
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -87,7 +86,6 @@ include '../includes/header.php';
         <div class="table-responsive">
             <table class="table table-bordered table-striped table-hover align-middle">
                 <thead class="table-dark">
-                    <!-- PERBAIKAN: Menambahkan header kolom Jam Masuk dan Kondisi -->
                     <tr>
                         <th>No</th>
                         <th>Nama Karyawan</th>
@@ -104,7 +102,6 @@ include '../includes/header.php';
                                 <td><?= $mulai + $index + 1 ?></td>
                                 <td><?= htmlspecialchars($item['username'] ?? $item['nama']) ?></td>
                                 <td class="text-center"><?= date('d F Y', strtotime($item['tanggal'])) ?></td>
-                                <!-- PERBAIKAN: Menambahkan sel data untuk Jam Masuk -->
                                 <td class="text-center"><?= $item['jam_masuk'] ? date('H:i', strtotime($item['jam_masuk'])) : '-' ?></td>
                                 <td class="text-center">
                                     <?php
@@ -116,7 +113,6 @@ include '../includes/header.php';
                                     ?>
                                     <span class="badge bg-<?= $status_color ?>"><?= htmlspecialchars($item['status']) ?></span>
                                 </td>
-                                <!-- PERBAIKAN: Menambahkan sel data untuk Kondisi -->
                                 <td class="text-center">
                                     <?php
                                     $kondisi_badge = '-';
@@ -139,7 +135,7 @@ include '../includes/header.php';
             </table>
         </div>
     </div>
-    <!-- Menambahkan footer kartu dengan paginasi -->
+    <!-- Paginasi -->
     <div class="card-footer bg-white">
         <?php
         if ($jumlahHalaman > 1) {
@@ -196,6 +192,6 @@ include '../includes/header.php';
 <?php endif; ?>
 
 <?php 
-$conn->close();
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php'; 
 ?>

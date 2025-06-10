@@ -1,8 +1,7 @@
 <?php
 // File: halaman/edit_pengguna.php
-// Menampilkan form untuk mengedit data pengguna.
 
-// Memuat file proses yang akan menyiapkan semua variabel
+// Memuat file proses
 require_once '../fungsi/proses_edit_pengguna.php';
 
 // Memuat header HTML
@@ -60,7 +59,6 @@ include '../includes/header.php';
 </div>
 
 <?php
-// Menutup koneksi database dan memuat footer
-$conn->close();
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php';
 ?>

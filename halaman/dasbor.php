@@ -1,14 +1,14 @@
 <?php
 // File: halaman/dasbor.php
-// File ini hanya bertanggung jawab untuk menampilkan data yang sudah disiapkan.
 
-// Langkah 1: Memuat file logika yang akan menyiapkan semua variabel yang dibutuhkan.
+// Memuat file logika
 require_once '../fungsi/logika_dasbor.php';
 
-// Langkah 2: Memuat header HTML.
+// Memuat Header
 include '../includes/header.php';
 ?>
 
+<!-- Bagian atas dasbor -->
 <div class="mb-4 d-flex justify-content-between align-items-start">
     <div>
         <h2><i class="bi bi-speedometer2"></i> <?php echo htmlspecialchars($page_title); ?></h2>
@@ -21,7 +21,7 @@ include '../includes/header.php';
         </p>
     </div>
     <div class="text-end">
-        <h4 id="liveClock" class="fw-bold text-primary"></h4>
+        <h4 id="liveClock" class="fw-bold"></h4>
         <p class="text-muted mb-2"><?php echo date('l, d F Y'); ?></p>
         <form method="GET" class="d-flex justify-content-end">
             <select name="bulan" class="form-select form-select-sm me-2" style="width: auto;" onchange="this.form.submit()" aria-label="Pilih Bulan">
@@ -93,6 +93,8 @@ include '../includes/header.php';
     </div>
 <?php endif; ?>
 
+
+<!-- Tabel pengajuan untuk admin -->
 <?php if ($is_admin && !empty($pengajuan_absensi_pending_admin)): ?>
 <div class="card shadow-sm mb-5">
     <div class="card-header bg-warning text-dark">
@@ -168,10 +170,7 @@ include '../includes/header.php';
     <div class="alert alert-info shadow-sm"><i class="bi bi-info-circle-fill"></i> Tidak ada pengajuan absensi yang menunggu persetujuan saat ini.</div>
 <?php endif; ?>
 
-
-
-
-<!-- Kartu Statistik Ringkasan -->
+<!-- Kartu Statistik -->
 <div class="mb-4 <?php echo ($is_admin && !empty($pengajuan_absensi_pending_admin)) ? 'mt-4' : 'mt-5'; ?>">
     <?php if ($is_admin): ?>
         <div class="row g-4">
@@ -184,17 +183,17 @@ include '../includes/header.php';
                 </div>
             </div>
             <div class="col-md-6 col-lg-6">
-                <div class="card text-white bg-info shadow-sm h-100"> 
+                <div class="card text-white bg-secondary shadow-sm h-100"> 
                     <div class="card-body d-flex justify-content-between align-items-center">
-                        <div><h3 class="card-title mb-0"><?php echo $total_absensi_keseluruhan; ?></h3><p class="card-text">Total Semua Absensi (Disetujui)</p></div>
+                        <div><h3 class="card-title mb-0"><?php echo $total_absensi_keseluruhan; ?></h3><p class="card-text">Total Semua Absensi </p></div>
                         <i class="bi bi-server" style="font-size: 3rem; opacity: 0.6;"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <h4 class="mt-4 mb-3">Statistik Bulan <?php echo $nama_bulan_filter . ' ' . $filter_tahun; ?> (Disetujui)</h4>
+        <h4 class="mt-4 mb-3">Statistik Bulan <?php echo $nama_bulan_filter . ' ' . $filter_tahun; ?> </h4>
     <?php else: // Untuk Karyawan ?>
-        <h4 class="mt-2 mb-3">Statistik Absensi Anda Bulan <?php echo $nama_bulan_filter . ' ' . $filter_tahun; ?> (Disetujui)</h4>
+        <h4 class="mt-2 mb-3">Statistik Absensi Anda Bulan <?php echo $nama_bulan_filter . ' ' . $filter_tahun; ?> </h4>
     <?php endif; ?>
 
     <div class="row g-4">
@@ -242,14 +241,14 @@ include '../includes/header.php';
 <div class="mt-5">
     <h4>
         <i class="bi bi-calendar3"></i> Rekapitulasi Absensi Bulan 
-        <?php echo $nama_bulan_filter . ' ' . $filter_tahun; ?> (Disetujui)
+        <?php echo $nama_bulan_filter . ' ' . $filter_tahun; ?> 
     </h4>
     <hr>
     <div class="row g-4"> 
         <div class="col-lg-8 mb-4 mb-lg-0">
             <div class="card shadow-sm h-100"> 
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title mb-3"><i class="bi bi-bar-chart-line-fill"></i> Tren Kehadiran Harian (Disetujui)</h5>
+                    <h5 class="card-title mb-3"><i class="bi bi-bar-chart-line-fill"></i> Tren Kehadiran Harian</h5>
                     <div style="position: relative; flex-grow: 1; min-height: 300px;"> 
                         <canvas id="hadirPerHariChart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
                     </div>
@@ -259,7 +258,7 @@ include '../includes/header.php';
         <div class="col-lg-4">
             <div class="card shadow-sm h-100"> 
                 <div class="card-body d-flex flex-column text-center">
-                    <h5 class="card-title mb-3"><i class="bi bi-pie-chart-fill"></i> Proporsi Status Absensi (Disetujui)</h5>
+                    <h5 class="card-title mb-3"><i class="bi bi-pie-chart-fill"></i> Proporsi Status Absensi</h5>
                     <div style="position: relative; flex-grow: 1; min-height: 300px;">
                         <canvas id="rekapBulananChart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
                     </div>
@@ -270,7 +269,7 @@ include '../includes/header.php';
 </div>
 
 <?php 
-$conn->close(); // Menutup koneksi di akhir
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php'; 
 ?>
 
@@ -290,10 +289,10 @@ include '../includes/footer.php';
     
     // Panggil updateClock setiap detik
     setInterval(updateClock, 1000);
-    // Panggil sekali saat halaman dimuat agar tidak ada jeda 1 detik
+    // Panggil sekali saat halaman dimuat
     updateClock();
 
-    // Data dari PHP untuk grafik (dari tabel absensi yang disetujui)
+    // Data dari PHP untuk grafik dari tabel absensi
     const labelsHarian = <?php echo json_encode($labels_hadir_per_hari); ?>;
     const dataHarian = <?php echo json_encode($data_hadir_per_hari); ?>;
     const dataBulanan = <?php echo json_encode(array_values($stats_month)); ?>;
@@ -307,7 +306,7 @@ include '../includes/footer.php';
             data: {
                 labels: labelsHarian,
                 datasets: [{
-                    label: 'Jumlah Hadir (Disetujui)',
+                    label: 'Jumlah Hadir',
                     data: dataHarian,
                     backgroundColor: 'rgba(25, 135, 84, 0.7)',
                     borderColor: 'rgba(25, 135, 84, 1)',
@@ -327,7 +326,7 @@ include '../includes/footer.php';
         });
     }
 
-    // Grafik 2: Doughnut Chart Rekapitulasi Bulanan
+    // Grafik 2: Donat Chart Rekapitulasi Bulanan
     const ctxRekapBulanan = document.getElementById('rekapBulananChart');
     if (ctxRekapBulanan) {
         new Chart(ctxRekapBulanan, {

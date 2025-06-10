@@ -1,8 +1,7 @@
 <?php
 // File: halaman/manajemen_pengguna.php
-// File ini bertanggung jawab untuk menampilkan halaman manajemen pengguna.
 
-// Memuat file proses yang akan menyiapkan semua variabel yang dibutuhkan
+// Memuat file proses
 require_once '../fungsi/proses_manajemen_pengguna.php';
 
 // Memuat header HTML
@@ -12,11 +11,10 @@ include '../includes/header.php';
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="m-0"><i class="bi bi-people-fill"></i> <?php echo htmlspecialchars($page_title); ?></h2>
-        <!-- PERBAIKAN: Tautan ke halaman tambah pengguna baru -->
         <a href="tambah_pengguna.php" class="btn btn-success"><i class="bi bi-plus-circle-fill"></i> Tambah Pengguna Baru</a>
     </div>
 
-    <!-- Menampilkan pesan flash jika ada -->
+    <!-- Menampilkan pesan flash -->
     <?php if ($message): ?>
     <div class="alert alert-<?php echo htmlspecialchars($message_type); ?> alert-dismissible fade show" role="alert">
         <?php echo htmlspecialchars($message); ?>
@@ -35,7 +33,6 @@ include '../includes/header.php';
                     </thead>
                     <tbody>
                         <?php
-                        // Melakukan loop pada hasil query yang sudah disiapkan oleh file proses
                         if ($result_users->num_rows > 0):
                             while ($user = $result_users->fetch_assoc()):
                         ?>
@@ -44,7 +41,6 @@ include '../includes/header.php';
                                     <td><?php echo htmlspecialchars($user['username']); ?></td>
                                     <td><span class="badge fs-6 <?php echo $user['role'] == 'admin' ? 'bg-primary' : 'bg-secondary'; ?>"><?php echo htmlspecialchars(ucfirst($user['role'])); ?></span></td>
                                     <td class="text-center">
-                                        <!-- Tautan ke halaman edit pengguna baru -->
                                         <a href="edit_pengguna.php?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-warning me-1" title="Edit"><i class="bi bi-pencil-square"></i></a>
                                         <?php if ($user['id'] !== $current_user_id): // Admin tidak bisa menghapus diri sendiri ?>
                                             <button type="button" class="btn btn-sm btn-danger delete-user-btn" 
@@ -67,7 +63,6 @@ include '../includes/header.php';
                             <tr><td colspan="4" class="text-center">Tidak ada pengguna yang terdaftar.</td></tr>
                         <?php
                         endif;
-                        // Menutup statement setelah selesai digunakan
                         $stmt_users->close();
                         ?>
                     </tbody>
@@ -77,7 +72,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Modal Konfirmasi Hapus Pengguna -->
+<!-- Konfirmasi Hapus Pengguna -->
 <div class="modal fade" id="userDeleteModal" tabindex="-1" aria-labelledby="userDeleteModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -91,7 +86,6 @@ include '../includes/header.php';
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <!-- Tautan ini akan diisi oleh JavaScript -->
         <a href="#" id="confirmUserDeleteBtn" class="btn btn-danger">Ya, Hapus Pengguna</a>
       </div>
     </div>
@@ -99,12 +93,12 @@ include '../includes/header.php';
 </div>
 
 <?php 
-// Menutup koneksi database dan memuat footer
-$conn->close();
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php'; 
 ?>
 
 <script>
+// Script Javascript untuk konfirmasi hapus
 document.addEventListener('DOMContentLoaded', function () {
     var userDeleteModal = document.getElementById('userDeleteModal');
     if (userDeleteModal) {
@@ -117,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
             var confirmButton = userDeleteModal.querySelector('#confirmUserDeleteBtn');
             
             modalUsername.textContent = userName;
-            // Tautan ke file proses hapus pengguna yang baru
             confirmButton.href = '../fungsi/proses_hapus_pengguna.php?id=' + userId;
         });
     }

@@ -1,6 +1,5 @@
 <?php
-// File: auth/login.php
-require_once '../config/config.php'; // Ini seharusnya memanggil session_start()
+require_once '../config/config.php'; 
 
 // Jika sudah login, langsung arahkan ke dasbor
 if (isset($_SESSION['user_id'])) {
@@ -9,7 +8,7 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $message = '';
-$message_type = ''; // 'success' atau 'danger'
+$message_type = ''; 
 
 // Proses Login
 if (isset($_POST['login'])) {
@@ -52,7 +51,6 @@ if (isset($_POST['login'])) {
     
     <style>
         body {
-            /* Gambar latar belakang dari Unsplash */
             background-image: url('../assets/img/loginBG.jpg');
             background-size: cover;
             background-position: center;
@@ -64,7 +62,6 @@ if (isset($_POST['login'])) {
             margin: 0;
         }
         .login-card {
-            /* Efek glassmorphism */
             background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(10px);
@@ -77,15 +74,14 @@ if (isset($_POST['login'])) {
         .login-title {
             color: #333;
         }
-        /* PERBAIKAN: Style baru untuk container logo */
         .logo-container {
-            background-color: rgba(255, 255, 255, 1); /* Latar belakang putih semi-transparan */
+            background-color: rgba(255, 255, 255, 1); 
             padding: 15px 15px;
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .logo-text {
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Bayangan teks halus sebagai outline */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1); 
         }
         .photo-credit {
             position: fixed;
@@ -112,7 +108,6 @@ if (isset($_POST['login'])) {
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-7 col-lg-5 col-xl-4">
-            <!-- PERBAIKAN: Menambahkan kelas .logo-container -->
             <div class="text-center mb-4 logo-container">
                 <h2 class="fw-bold text-dark display-5 logo-text"><i class="bi bi-calendar-check-fill"></i> AbsensiCorp</h2>
                 <p class="text-secondary">Silakan masuk untuk melanjutkan</p>

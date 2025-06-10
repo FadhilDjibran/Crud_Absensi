@@ -1,27 +1,22 @@
 <?php
 // File: fungsi/logika_dasbor.php
-// Berisi semua logika backend untuk halaman dasbor.
 
-// Memuat file konfigurasi dan memulai session.
-// Path ini diasumsikan dari lokasi file logika di dalam folder 'fungsi'.
 require_once '../config/config.php';
-// Memastikan hanya pengguna yang terautentikasi yang dapat menjalankan logika ini.
 require_once '../auth/auth.php'; 
 
-// Variabel yang akan dikirim ke file tampilan
-$page_title = "Dashboard Absensi"; // Judul halaman untuk header
+$page_title = "Dashboard Absensi"; 
 
-// --- BAGIAN FILTER BULAN/TAHUN ---
+// Filter Bulan/Tahun
 $filter_bulan = $_GET['bulan'] ?? date('m');
 $filter_tahun = $_GET['tahun'] ?? date('Y');
 $nama_bulan_filter = DateTime::createFromFormat('!m', $filter_bulan)->format('F');
 
-// Variabel sesi dan peran pengguna
+// Sesi dan peran pengguna
 $is_admin = ($_SESSION['role'] == 'admin');
 $current_user_id = $_SESSION['user_id'];
 $current_username = $_SESSION['username'];
 
-// --- Logika Status Absensi Hari Ini untuk Karyawan & Daftar Pengajuan untuk Admin ---
+// Logika Status Absensi Hari Ini untuk Karyawan & Daftar Pengajuan untuk Admin
 $status_absensi_hari_ini_karyawan = "Belum Absen"; // Default untuk karyawan
 $pengajuan_absensi_pending_admin = []; // Default untuk admin
 
@@ -45,7 +40,7 @@ if (!$is_admin) {
     }
     $stmt_cek_pengajuan->close();
 
-    // 2. Jika status masih "Belum Absen" atau "Pengajuan Ditolak", cek tabel absensi (untuk yang sudah disetujui)
+    // 2. Jika status masih "Belum Absen" atau "Pengajuan Ditolak", cek tabel absensi 
     if ($status_absensi_hari_ini_karyawan == "Belum Absen" || $status_absensi_hari_ini_karyawan == "Pengajuan Ditolak") {
         $stmt_cek_absensi_final = $conn->prepare(
             "SELECT status FROM absensi WHERE user_id = ? AND tanggal = ? LIMIT 1"
@@ -69,16 +64,16 @@ if (!$is_admin) {
     }
 }
 
-// --- Query Statistik (Membaca dari tabel 'absensi' yang sudah disetujui) ---
+// Query Statistik
 
-// 1. Total Pengguna Karyawan (Hanya untuk Admin)
+// 1. Total Pengguna Karyawan
 $total_karyawan = 0;
 if ($is_admin) {
     $total_karyawan_res = $conn->query("SELECT COUNT(id) as total FROM users");
     if ($total_karyawan_res) $total_karyawan = $total_karyawan_res->fetch_assoc()['total'] ?? 0;
 }
 
-// 2. Total Absensi Tercatat KESELURUHAN (dari tabel absensi, disesuaikan dengan role)
+// 2. Total Absensi Tercatat Keseluruhan
 $where_clause_total_absensi_keseluruhan = $is_admin ? '' : ' WHERE user_id = ?';
 $total_absensi_keseluruhan_sql = "SELECT COUNT(id) as total FROM absensi" . $where_clause_total_absensi_keseluruhan;
 $stmt_total_absensi_keseluruhan = $conn->prepare($total_absensi_keseluruhan_sql);
@@ -90,7 +85,7 @@ $total_absensi_keseluruhan_data = $stmt_total_absensi_keseluruhan->get_result()-
 $total_absensi_keseluruhan = $total_absensi_keseluruhan_data['total'] ?? 0;
 $stmt_total_absensi_keseluruhan->close();
 
-// 3. Statistik Bulanan (dari tabel absensi, menggunakan filter bulan & tahun)
+// 3. Statistik Bulanan 
 $stats_month_sql = "SELECT status, COUNT(id) as jumlah FROM absensi" . ($is_admin ? " WHERE MONTH(tanggal) = ? AND YEAR(tanggal) = ?" : " WHERE MONTH(tanggal) = ? AND YEAR(tanggal) = ? AND user_id = ?") . " GROUP BY status";
 $stmt_month = $conn->prepare($stats_month_sql);
 if ($is_admin) {
@@ -106,7 +101,7 @@ while ($row = $result_month->fetch_assoc()) {
 }
 $stmt_month->close();
 
-// 4. Data untuk Grafik Hadir Harian (dari tabel absensi, menggunakan filter bulan & tahun)
+// 4. Data untuk Grafik Hadir Harian 
 $labels_hadir_per_hari = [];
 $data_hadir_per_hari = [];
 $days_in_month = cal_days_in_month(CAL_GREGORIAN, (int)$filter_bulan, (int)$filter_tahun);
@@ -130,7 +125,7 @@ while ($row = $result_hadir_harian->fetch_assoc()) {
 }
 $stmt_hadir_harian->close();
 
-// Logika untuk Notifikasi Flash Message
+// Logika Flash Message
 $flash_message_text = '';
 $flash_message_type = '';
 if (isset($_SESSION['flash_message'])) {
@@ -140,5 +135,4 @@ if (isset($_SESSION['flash_message'])) {
     unset($_SESSION['flash_message_type']);
 }
 
-// Tidak ada output HTML di sini, semua variabel akan digunakan oleh file tampilan.
-// Koneksi database akan ditutup di file tampilan setelah selesai digunakan.
+

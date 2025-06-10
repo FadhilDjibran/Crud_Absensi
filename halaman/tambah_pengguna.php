@@ -1,8 +1,7 @@
 <?php
 // File: halaman/tambah_pengguna.php
-// Menampilkan form untuk menambah pengguna baru.
 
-// Memuat file proses yang akan menyiapkan semua variabel yang dibutuhkan
+// Memuat file proses
 require_once '../fungsi/proses_tambah_pengguna.php';
 
 // Memuat header HTML
@@ -17,7 +16,7 @@ include '../includes/header.php';
                 <a href="manajemen_pengguna.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali ke Manajemen</a>
             </div>
 
-            <!-- Menampilkan pesan error validasi atau pesan flash dari redirect -->
+            <!-- Menampilkan pesan flash -->
             <?php if (!empty($message)): ?>
                 <div class="alert alert-<?php echo htmlspecialchars($message_type); ?> alert-dismissible fade show" role="alert">
                     <?php echo htmlspecialchars($message); ?>
@@ -56,7 +55,6 @@ include '../includes/header.php';
 </div>
 
 <?php 
-// Menutup koneksi database dan memuat footer
-$conn->close();
+$conn->close(); // Menutup koneksi
 include '../includes/footer.php';
 ?>
